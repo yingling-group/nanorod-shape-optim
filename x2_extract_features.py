@@ -36,8 +36,8 @@ def extract_peak_fwhm(x, y, plot=False):
     widths = peak_widths(bspl(xx), pks, rel_height = 0.5)[0]
     fwhm = widths * dx
 
-    return xx[pks], fwhm
-
+    # tspk, lspk, tsfw, lsfw
+    return xx[pks[-2]], xx[pks[-1]], fwhm[-2], fwhm[-1]
 
 # Parse Arguments
 args = parser.parse_args()
@@ -77,26 +77,26 @@ for fname in csv.name:
     spec = np.loadtxt(fpath, skiprows=3, delimiter=",")
 
     # In water
-    pk, fw = extract_peak_fwhm(spec[:, 0], spec[:, 1])
-    df['tspk1'].append(pk[0])
-    df['lspk1'].append(pk[1])
-    df['tsfw1'].append(fw[0])
-    df['lsfw1'].append(fw[1])
+    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[:, 0], spec[:, 1])
+    df['tspk1'].append(tspk)
+    df['lspk1'].append(lspk)
+    df['tsfw1'].append(tsfw)
+    df['lsfw1'].append(lsfw)
 
     # After purification
-    pk, fw = extract_peak_fwhm(spec[:, -2], spec[:, -1])
-    df['tspk3'].append(pk[0])
-    df['lspk3'].append(pk[1])
-    df['tsfw3'].append(fw[0])
-    df['lsfw3'].append(fw[1])
+    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[:, -2], spec[:, -1])
+    df['tspk3'].append(tspk)
+    df['lspk3'].append(lspk)
+    df['tsfw3'].append(tsfw)
+    df['lsfw3'].append(lsfw)
 
     # After overcoating
     if spec.shape[1] > 4:
-        pk, fw = extract_peak_fwhm(spec[:, 2], spec[:, 3])
-        df['tspk2'].append(pk[0])
-        df['lspk2'].append(pk[1])
-        df['tsfw2'].append(fw[0])
-        df['lsfw2'].append(fw[1])
+        tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[:, 2], spec[:, 3])
+        df['tspk2'].append(tspk)
+        df['lspk2'].append(lspk)
+        df['tsfw2'].append(tsfw)
+        df['lsfw2'].append(lsfw)
     else:
         df['tspk2'].append("")
         df['lspk2'].append("")

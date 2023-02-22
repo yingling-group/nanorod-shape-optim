@@ -39,6 +39,24 @@ def extract_peak_fwhm(x, y, plot=False):
     # tspk, lspk, tsfw, lsfw
     return xx[pks[-2]], xx[pks[-1]], fwhm[-2], fwhm[-1]
 
+def calc_lobe_fraction(df):
+    # teosVolume,teosVolPct,thickness,quality,rodssquare,rodsfull,rodslobe,rodshalf,rodsagg,rodsline
+    tot = df.rodssquare + df.rodsfull + df.rodslobe + df.rodshalf + df.rodsagg + df.rodsline
+    return df.rodslobe / tot
+
+def calc_full_fraction(df):
+    # teosVolume,teosVolPct,thickness,quality,rodssquare,rodsfull,rodslobe,rodshalf,rodsagg,rodsline
+    tot = df.rodssquare + df.rodsfull + df.rodslobe + df.rodshalf + df.rodsagg + df.rodsline
+    return df.rodsfull / tot
+
+def calc_quality(df):
+    return df[["rodssquare","rodsfull","rodslobe","rodshalf","rodsagg","rodsline"]].std(axis=1)
+
+def add_column(dfdict, csv, col):
+    if col in csv:
+        dfdict[col] = csv[col]
+    return dfdict
+
 # Parse Arguments
 args = parser.parse_args()
 
@@ -105,5 +123,22 @@ for fname in csv.name:
 
     print("OK")
 
+# Add additional variables if exist
+df = add_column(df, csv, 'teosVolume')
+df = add_column(df, csv, 'teosVolPct')
+df = add_column(df, csv, 'thickness')
+
+try:
+    df['quality2']    = calc_quality(csv)
+    df['quality1']    = csv.quality
+except:
+    # not training data
+    pass
+
+# Add the target variables
+df['lobefrac']    = calc_lobe_fraction(csv)
+df['fullfrac']    = calc_full_fraction(csv)
+
+# Save
 pd.DataFrame(df).to_csv(out, index=False)
 print("Save OK: %s" %out)

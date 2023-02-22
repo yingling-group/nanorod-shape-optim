@@ -25,8 +25,9 @@ csv = np.loadtxt(args.csv, skiprows=3, delimiter=",")
 
 fig, ax = plt.subplots(figsize=(3.25, 2.2))
 ax.plot(csv[:,0], csv[:,1], 'k-', label = "GNR in H2O")
-ax.plot(csv[:,2], csv[:,3], 'r-', label = "After overcoating")
-ax.plot(csv[:,4], csv[:,5], 'g-', label = "After purification")
+if csv.shape[1] > 4:
+    ax.plot(csv[:,2], csv[:,3], 'r-', label = "After overcoating")
+ax.plot(csv[:,-2], csv[:,-1], 'g-', label = "After purification")
 
 plt.xlim(400, 1000)
 plt.ylim(0, 2)

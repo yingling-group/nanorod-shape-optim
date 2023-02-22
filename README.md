@@ -20,3 +20,5 @@
 
 `x3_data_map.R` - Generate missingness plot and correlation plots for `Data/training.csv`. The CSV file must exist.
 
+`x4_multiple_imputation.R` - Run MICE imputation on `Data/training.csv`, save imputed data set and Kolmogorov-Smirnov test statistic and plot.
+

@@ -94,7 +94,7 @@ class Regressor:
                         name = self.yCol, index=y.index)
             return ys
 
-    def AddFeatures(self, *fnlist, show_list = True):
+    def AddFeatures(self, fnlist, show_list = True):
         """ Add additional features to the training dataset """
 
         for fn in fnlist:
@@ -106,7 +106,7 @@ class Regressor:
                 print(list(newfeats), "\n")
             self.featFns.append(fn)
 
-    def PrepPrediction(self, Ts):
+    def _prep_df(self, Ts):
         """ Prepare a dataframe/dict/numpy array for prediction by adding features """
 
         # a dictionary containing a single row
@@ -140,7 +140,7 @@ class Regressor:
         name = str(model).split("(")[0]
         assert self.model is None, "Cannot refit the same Regressor, please create a new one."
 
-        print(f"Fitting {self.yCol}={name}()", end =" ... ")
+        print(f"Fitting {self.yCol} = {name}()", end =" ... ")
         sys.stdout.flush()
 
         model.fit(
@@ -303,6 +303,7 @@ class Regressor:
 
     def Fitness(self, Ts, save = False):
         """ Calculate and plot fitness of the given test dataset """
+        Ts = self._prep_df(Ts)
         xtr = self.Tr[self.xCols]
         xts = Ts[self.xCols]
         ytr = self.Tr[self.yCol]
@@ -315,7 +316,7 @@ class Regressor:
         MSE = mean_squared_error(ytr, ptr)
 
         # Plot
-        fig, ax = plt.subplots(1, 3, figsize=(8, 2.25))
+        fig, ax = plt.subplots(1, 3, figsize=(8, 2.5))
         ax[0].plot(ytr, ptr, 'bx')
         dline = np.linspace(*ax[0].get_xlim())
         ax[0].plot(dline, dline, 'k--')
@@ -338,6 +339,7 @@ class Regressor:
         ax[2].plot(yts, pts - yts, 'r.')
         ax[2].set_xlabel("Posterior residuals")
 
+        plt.suptitle(self.Name)
         plt.tight_layout()
         if save:
             plt.savefig(save, dpi=600)
@@ -353,6 +355,8 @@ class Regressor:
         assert isinstance(Ts, pd.DataFrame), f"Ts must be a DataFrame, not {type(Ts)}"
         assert self.yCol in Ts.columns, "Ts does not contain the response"
 
+        Ts = self._prep_df(Ts)
+
         # Scale
         y = Ts[self.yCol]
         p = self.Predict(Ts)
@@ -361,7 +365,7 @@ class Regressor:
         MSE = mean_squared_error(y, p)
 
         # Plot
-        fig, ax = plt.subplots(1, 2, figsize=(5, 2.25), sharey=False)
+        fig, ax = plt.subplots(1, 2, figsize=(5, 2.5), sharey=False)
         ax[0].plot(y, p, 'bx')
         dline = np.linspace(*ax[0].get_xlim())
         ax[0].plot(dline, dline, 'k--')
@@ -373,6 +377,14 @@ class Regressor:
         ax[1].axhline(y=0, linestyle='--')
         ax[1].set_xlabel("Residuals")
 
+        plt.suptitle(self.Name)
         plt.tight_layout()
         plt.show()
         return R2, MSE
+
+
+def New(df, xcols, ycol, fnlist):
+    reg = Regressor(df)
+    reg.SetColumns(xcols, ycol)
+    reg.AddFeatures(fnlist)
+    return reg

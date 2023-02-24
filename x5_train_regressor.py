@@ -31,28 +31,28 @@ ycols = ['lobefrac', 'fullfrac']
 #%% Prepare for training with the imputated dataset 1
 reload(regressor)
 
-ml = regressor.Regressor(dfi)
-ml.AddFeatures(features.Differences, features.InverseDifferences)
-ml.SetColumns(xcols, 'lobefrac')
+ml1 = regressor.Regressor(dfi)
+ml1.AddFeatures(features.Differences, features.InverseDifferences)
+ml1.SetColumns(xcols, 'lobefrac')
 
 # %% Gaussian Process Regression
 kern = kernels.RBF() + kernels.WhiteKernel()
 gpr = GaussianProcessRegressor(kernel=kern)
-ml.FitModel(gpr)
+ml1.FitModel(gpr)
 
 # %% Fitness
-ml.Fitness(ml.PrepPrediction(df1))
-ml.Fitness(ml.PrepPrediction(df2))
-ml.Fitness(ml.PrepPrediction(df3))
-ml.Fitness(ml.PrepPrediction(df4))
-ml.Fitness(ml.PrepPrediction(df5))
+ml1.Fitness(ml1.PrepPrediction(df1))
+ml1.Fitness(ml1.PrepPrediction(df2))
+ml1.Fitness(ml1.PrepPrediction(df3))
+ml1.Fitness(ml1.PrepPrediction(df4))
+ml1.Fitness(ml1.PrepPrediction(df5))
 
 # %% Random Forest Regressor
 ml2 = regressor.Regressor(dfi)
 ml2.AddFeatures(features.Differences, features.InverseDifferences)
 ml2.SetColumns(xcols, 'lobefrac')
 
-rfr = RandomForestRegressor(n_estimators=100, random_state=42)
+rfr = RandomForestRegressor(n_estimators=1000, random_state=42)
 
 ml2.FitModel(rfr)
 
@@ -62,5 +62,11 @@ ml2.Fitness(ml2.PrepPrediction(df2))
 ml2.Fitness(ml2.PrepPrediction(df3))
 ml2.Fitness(ml2.PrepPrediction(df4))
 ml2.Fitness(ml2.PrepPrediction(df5))
+
+# %% Load the testing data
+testdf = pd.read_csv("Data/testing_spectra.csv")
+
+ml1.ParityAndResidual(ml1.PrepPrediction(testdf))
+ml2.ParityAndResidual(ml2.PrepPrediction(testdf))
 
 # %%

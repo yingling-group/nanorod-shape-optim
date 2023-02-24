@@ -1,7 +1,7 @@
 import os
 import argparse
 
-import numpy as np 
+import pandas as pd
 import matplotlib.pyplot as plt 
 
 try:
@@ -21,13 +21,23 @@ out = "Plots/%s.png" %(os.path.basename(args.csv))
 
 print("Plotting", args.csv, "...")
 
-csv = np.loadtxt(args.csv, skiprows=3, delimiter=",")
+csv = pd.read_csv(args.csv, skiprows=2, delimiter=",")
+if csv.shape[1] > 4:
+    csv.columns = ["wl1", "ab1","wl2", "ab2","wl3", "ab3"]
+else:
+    csv.columns = ["wl1", "ab1","wl3", "ab3"]
 
 fig, ax = plt.subplots(figsize=(3.25, 2.2))
-ax.plot(csv[:,0], csv[:,1], 'k-', label = "GNR in H2O")
-if csv.shape[1] > 4:
-    ax.plot(csv[:,2], csv[:,3], 'r-', label = "After overcoating")
-ax.plot(csv[:,-2], csv[:,-1], 'g-', label = "After purification")
+
+df = csv[["wl1", "ab1"]].sort_values("wl1")
+ax.plot(df.wl1, df.ab1, 'k-', label = "GNR in H2O")
+
+df = csv[["wl3", "ab3"]].sort_values("wl3")
+ax.plot(df.wl3, df.ab3, 'g-', label = "After purification")
+
+if "wl2" in csv:
+    df = csv[["wl2", "ab2"]].sort_values("wl2")
+    ax.plot(df.wl2, df.ab2, 'r-', label = "After overcoating")
 
 plt.xlim(400, 1000)
 plt.ylim(0, 2)

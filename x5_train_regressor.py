@@ -15,7 +15,7 @@ dfi = train[train["imp"] != 0]
 # Specify the features and target
 xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
          'lsfw2', 'tsfw2', 'lspk3', 'tspk3', 'lsfw3', 'tsfw3']
-ycol = "lobefrac"
+ycol = "fullfrac"
 fnAgg = [features.Differences]
 
 
@@ -23,11 +23,11 @@ fnAgg = [features.Differences]
 reload(regressor)
 
 ml1 = regressor.New(dfi, xcols, ycol, fnAgg)
-kern = kernels.RBF() + kernels.WhiteKernel()
+kern = kernels.RBF(length_scale=[1.0] * len(xcols)) + kernels.WhiteKernel()
 gpr = GaussianProcessRegressor(kernel=kern)
 ml1.FitModel(gpr)
 
-# %% Random Forest Regressor
+# %% Random Forest Regression
 ml2 = regressor.New(dfi, xcols, ycol, fnAgg)
 rfr = RandomForestRegressor(n_estimators=1000, random_state=42)
 ml2.FitModel(rfr)

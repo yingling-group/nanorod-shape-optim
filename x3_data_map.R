@@ -3,14 +3,16 @@ library(data.table)
 library(Amelia)
 library(corrplot)
 
-raw <- fread("Data/training.csv")
+raw <- fread("Data/training_spectra.csv")
 str(raw)
 svg("Plots/MissingMap.svg")
 missmap(raw)
 dev.off()
 
 ## CorrPlot
-raw %>% select(-c(name, teosVolPct)) %>% 
+ignoreCols <- c("name", "teosVolPct", "thickness", "quality1", "quality2")
+
+raw %>% select(-all_of(ignoreCols)) %>% 
   cor(use = "complete.obs", method = "pearson") -> cm
 
 svg("Plots/PearsonCorrelations.svg")
@@ -21,7 +23,7 @@ corrplot(cm,
 
 dev.off()
 
-raw %>% select(-c(name, teosVolPct)) %>% 
+raw %>% select(-all_of(ignoreCols)) %>% 
   cor(use = "complete.obs", method = "spearman") -> cm
 
 svg("Plots/SpearmanCorrelations.svg")

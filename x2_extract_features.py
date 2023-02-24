@@ -211,14 +211,15 @@ df = add_column(df, csv, 'teosVolPct')
 df = add_column(df, csv, 'thickness')
 
 try:
+    # Training dataset
     df['quality2']    = calc_quality(csv)
     df['quality1']    = csv.quality
-    # Add the target variables
     df['lobefrac']    = calc_lobe_fraction(csv)
     df['fullfrac']    = calc_full_fraction(csv)
 except:
-    # not training data
-    pass
+    # Testing dataset
+    df = add_column(df, csv, 'lobefrac')
+    df = add_column(df, csv, 'fullfrac')
 
 # Save
 pd.DataFrame(df).to_csv(out, index=False)

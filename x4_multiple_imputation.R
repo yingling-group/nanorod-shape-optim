@@ -3,7 +3,7 @@ library(data.table)
 library(mice)
 library(ggplot2)
 
-raw <- fread("Data/training.csv")
+raw <- fread("Data/training_spectra.csv")
 str(raw)
 
 outdir <- "Data"

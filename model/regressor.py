@@ -347,7 +347,11 @@ class Regressor:
         else:
             plt.show()
             
-        return R2, MSE
+        return {
+            'model': self.Name,
+            'R2': R2,
+            'MSE': MSE
+        }
 
     def ParityAndResidual(self, Ts):
         """ Plot parity and residuals of the given test dataset """
@@ -380,7 +384,11 @@ class Regressor:
         plt.suptitle(self.Name)
         plt.tight_layout()
         plt.show()
-        return R2, MSE
+        return {
+            'model': self.Name,
+            'R2': R2,
+            'MSE': MSE
+        }
 
 
 def New(df, xcols, ycol, fnlist):

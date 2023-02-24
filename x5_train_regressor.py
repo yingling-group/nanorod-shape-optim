@@ -1,9 +1,6 @@
 #%%
-import os 
-from importlib import reload
-
-import numpy as np
 import pandas as pd
+from importlib import reload
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -13,20 +10,13 @@ from model import regressor, features
 
 #%% Training data
 train = pd.read_csv("Data/imputed_data.mice.csv")
-train.head()
-
 dfi = train[train["imp"] != 0]
-df1 = train[train["imp"] == 1]
-df2 = train[train["imp"] == 2]
-df3 = train[train["imp"] == 3]
-df4 = train[train["imp"] == 4]
-df5 = train[train["imp"] == 5]
 
 # Specify the features and target
 xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
          'lsfw2', 'tsfw2', 'lspk3', 'tspk3', 'lsfw3', 'tsfw3']
 ycol = "lobefrac"
-fnAgg = [features.Differences, features.InverseDifferences]
+fnAgg = [features.Differences]
 
 
 # %% Gaussian Process Regression
@@ -45,7 +35,10 @@ ml2.FitModel(rfr)
 # %% Load the testing data
 testdf = pd.read_csv("Data/testing_spectra.csv")
 
-ml1.ParityAndResidual(testdf)
-ml2.ParityAndResidual(testdf)
+res1 = ml1.ParityAndResidual(testdf)
+res2 = ml2.ParityAndResidual(testdf)
+
+print(res1)
+print(res2)
 
 # %%

@@ -37,7 +37,10 @@ class Pipeline:
             assert isinstance(ycol, str), "Only 1 y column supported"
             assert ycol in self.Tr.columns, f"{ycol} not in dataframe"
             self.yCol = ycol
-            self.ysclr = StandardScaler().fit(self.Tr[[ycol]].values)
+            try:
+                self.ysclr = StandardScaler().fit(self.Tr[[ycol]].values)
+            except ValueError:
+                pass
 
     def _scaleX(self, X):
         """ Scale a given dataframe of features """
@@ -105,6 +108,20 @@ class Pipeline:
                 print(list(newfeats), "\n")
             self.featFns.append(fn)
 
+    def FitModel(self, model):
+        name = str(model).split("(")[0]
+        assert self.model is None, "Cannot refit the model, please create a new one."
+
+        print(f"Fitting {self.yCol} = {name}()", end =" ... ")
+        sys.stdout.flush()
+
+        model.fit(
+            self._scaleX(self.Tr[self.xCols]),
+            self._scaleY(self.Tr[self.yCol])
+        )
+        self.model = model
+        print("OK")
+
     def _prep_df(self, Ts):
         """ Prepare a dataframe/dict/numpy array for prediction by adding features """
 
@@ -134,36 +151,6 @@ class Pipeline:
             Ts = fn(Ts)
 
         return Ts
-
-    def FitModel(self, model):
-        name = str(model).split("(")[0]
-        assert self.model is None, "Cannot refit the model, please create a new one."
-
-        print(f"Fitting {self.yCol} = {name}()", end =" ... ")
-        sys.stdout.flush()
-
-        model.fit(
-            self._scaleX(self.Tr[self.xCols]),
-            self._scaleY(self.Tr[self.yCol])
-        )
-        self.model = model
-        print("OK")
-
-    def Predict(self, df):
-        assert isinstance(df, pd.DataFrame), f"df must be a DataFrame, not {type(df)}"
-        assert self.model != None, "Please train a model first"
-        for c in self.xCols:
-            assert c in df.columns, \
-                f"Column not found: {c}, please call PrepPrediction() first"
-
-        X = df[self.xCols]
-        X = self._scaleX(X)
-
-        yp = self.model.predict(X)
-        yp = pd.Series(yp, name=self.yCol, index = X.index)
-        yp = self._unscaleY(yp)
-
-        return yp
 
     def Augment(self, cols, df = None, K = 3, qcol = "quality", scale = 0.2,
                                             plot = True, save = False):

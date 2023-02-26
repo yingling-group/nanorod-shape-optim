@@ -11,6 +11,22 @@ class Regressor(pipeline.Pipeline):
     def __init__(self, df = None):
         super(Regressor, self).__init__(df)
 
+    def Predict(self, df):
+        assert isinstance(df, pd.DataFrame), f"df must be a DataFrame, not {type(df)}"
+        assert self.model != None, "Please train a model first"
+        for c in self.xCols:
+            assert c in df.columns, \
+                f"Column not found: {c}, please call PrepPrediction() first"
+
+        X = df[self.xCols]
+        X = self._scaleX(X)
+
+        yp = self.model.predict(X)
+        yp = pd.Series(yp, name=self.yCol, index = X.index)
+        yp = self._unscaleY(yp)
+
+        return yp
+        
     def Fitness(self, Ts, save = False):
         """ Calculate and plot fitness of the given test dataset """
         Ts = self._prep_df(Ts)

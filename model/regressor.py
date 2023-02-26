@@ -27,8 +27,13 @@ class Regressor(pipeline.Pipeline):
 
         return yp
         
-    def Fitness(self, Ts, save = False):
-        """ Calculate and plot fitness of the given test dataset """
+    def Fitness(self, Ts = None, save = False):
+        """ Calculate and plot fitness of the given test dataset.
+            If not dataset is given, use the splitted test dataset.
+        """
+        Ts = self._prep_df(Ts)
+        assert self.yCol in Ts.columns, "Ts does not contain the response"
+
         Ts = self._prep_df(Ts)
         xtr = self.Tr[self.xCols]
         xts = Ts[self.xCols]
@@ -79,13 +84,12 @@ class Regressor(pipeline.Pipeline):
             'MSE': MSE
         }
 
-    def ParityAndResidual(self, Ts):
-        """ Plot parity and residuals of the given test dataset """
-
-        assert isinstance(Ts, pd.DataFrame), f"Ts must be a DataFrame, not {type(Ts)}"
-        assert self.yCol in Ts.columns, "Ts does not contain the response"
-
+    def ParityAndResidual(self, Ts = None, output = None):
+        """ Plot parity and residuals of the given test dataset.
+            If not dataset is given, use the splitted test dataset.
+        """
         Ts = self._prep_df(Ts)
+        assert self.yCol in Ts.columns, "Ts does not contain the response"
 
         # Scale
         y = Ts[self.yCol]
@@ -95,11 +99,11 @@ class Regressor(pipeline.Pipeline):
         MSE = mean_squared_error(y, p)
 
         # Plot
-        fig, ax = plt.subplots(1, 2, figsize=(5, 2.5), sharey=False)
+        fig, ax = plt.subplots(1, 2, figsize=(6, 2.5), sharey=False)
         ax[0].plot(y, p, 'bx')
         dline = np.linspace(*ax[0].get_xlim())
         ax[0].plot(dline, dline, 'k--')
-        ax[0].set_xlabel("True")
+        ax[0].set_xlabel("Truth")
         ax[0].set_ylabel("Prediction")
         ax[0].set_title("R2 = %0.2f, RMSE = %0.2f" %(R2, np.sqrt(MSE)))
 
@@ -109,7 +113,12 @@ class Regressor(pipeline.Pipeline):
 
         plt.suptitle(self.Name)
         plt.tight_layout()
-        plt.show()
+        if output:
+            plt.savefig(output, dpi=600)
+            plt.close()
+            print("Save OK:", output)
+        else:
+            plt.show()
         return {
             'model': self.Name,
             'R2': R2,
@@ -121,4 +130,5 @@ def New(df, xcols, ycol, fnlist):
     reg = Regressor(df)
     reg.SetColumns(xcols, ycol)
     reg.AddFeatures(fnlist)
+    reg.Split()
     return reg

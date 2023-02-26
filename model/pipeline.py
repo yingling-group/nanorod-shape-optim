@@ -14,6 +14,7 @@ class Pipeline:
             assert isinstance(df, pd.DataFrame), "DataFrame needed for the training dataset"
 
         self.Tr = df
+        self.Ts = None
 
         # transform handlers
         self.xsclr = None 
@@ -122,11 +123,15 @@ class Pipeline:
         self.model = model
         print("OK")
 
-    def _prep_df(self, Ts):
-        """ Prepare a dataframe/dict/numpy array for prediction by adding features """
+    def _prep_df(self, Ts = None):
+        """ Prepare a dataframe/dict/numpy array for prediction by adding features.
+            If no dataset is given, use the previously splitted test dataset.
+        """
+        if Ts is None:
+            Ts = self.Ts
 
         # a dictionary containing a single row
-        if isinstance(Ts, dict):
+        elif isinstance(Ts, dict):
             for c in self.xCols: assert c in Ts.keys(), f"{c} not in Ts"
             Ts = pd.DataFrame(Ts, index=[0])
 
@@ -239,16 +244,17 @@ class Pipeline:
                 # plt.tight_layout()
                 plt.show()
 
-    def Split(self, xcols, ycol, df = None, test_size=0.33, fold=0, K=None):
-        if df is None: df = self.out
-        assert isinstance(df, pd.DataFrame), f"df must be a DataFrame, not {type(df)}"
+    def Split(self, test_size=0.20, fold=0, K=None):
+        """ Perform stratification of the dataset.
+            If K is specified, select the fold-th fold as test set.
+        """
+        df = self.Tr.copy()
 
-        self._set_cols(xcols, ycol, df)
-        X = df[xcols]
-        y = df[ycol]
+        X = df[self.xCols]
+        y = df[self.yCol]
 
         if K is None:
-            # normal train test split
+            # Normal train test split of scikit-learn
             xtr, xts, ytr, yts = train_test_split(X, y, test_size=test_size)
             print(f"Selected random {test_size} of rows as test set.")
             Tr = pd.concat([xtr, ytr], axis=1)
@@ -266,8 +272,12 @@ class Pipeline:
                             df.iloc[end:nrows]), axis=0)
             Tr = Tr.sample(frac=1)
             
-        self.out = Tr, Ts
-        return Tr, Ts
+        self.Tr = Tr 
+        self.Ts = Ts
+
+        print("Split OK:")
+        print("\t %d rows for testing" %Ts.shape[0])
+        print("\t %d rows for training" %Tr.shape[0])
 
     @property
     def Name(self):

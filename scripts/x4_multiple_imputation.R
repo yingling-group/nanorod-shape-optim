@@ -21,7 +21,7 @@ predM <- imp$predictorMatrix
 meth <- imp$method
 
 # Do not use the following variables as predictors
-predM[, c("name", "quality1", "quality2", "thickness")] <- 0
+predM[, c("name")] <- 0
 
 ## Run
 rds <- paste0(outdir, "/rds.lastrun_mice.rds")
@@ -88,7 +88,7 @@ m <- 5
 kstable <- data.table()
 
 for (col in colnames(imputed)) {
-  if (col %in% c('id', 'imp', "name", "quality1", "quality2", "thickness")) {
+  if (col %in% c('id', 'imp', "name")) {
     next
   }
   cat("Processing ", col, "\n")

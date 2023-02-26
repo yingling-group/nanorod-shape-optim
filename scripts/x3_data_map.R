@@ -10,7 +10,7 @@ missmap(raw)
 dev.off()
 
 ## CorrPlot
-ignoreCols <- c("name", "teosVolPct", "thickness", "quality1", "quality2")
+ignoreCols <- c("name", "teosVolPct")
 
 raw %>% select(-all_of(ignoreCols)) %>% 
   cor(use = "complete.obs", method = "pearson") -> cm

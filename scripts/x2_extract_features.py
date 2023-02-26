@@ -121,6 +121,12 @@ def calc_full_fraction(df):
     tot = df.rodssquare + df.rodsfull + df.rodslobe + df.rodshalf + df.rodsagg + df.rodsline
     return df.rodsfull / tot
 
+def calc_other_fraction(df):
+    # teosVolume,teosVolPct,thickness,quality,rodssquare,rodsfull,rodslobe,rodshalf,rodsagg,rodsline
+    tot = df.rodssquare + df.rodsfull + df.rodslobe + df.rodshalf + df.rodsagg + df.rodsline
+    other = df.rodssquare + df.rodshalf + df.rodsagg + df.rodsline
+    return other / tot
+
 def calc_quality(df):
     return df[["rodssquare","rodsfull","rodslobe","rodshalf","rodsagg","rodsline"]].std(axis=1)
 
@@ -208,18 +214,18 @@ for fname in csv.name:
 # Add additional variables if exist
 df = add_column(df, csv, 'teosVolume')
 df = add_column(df, csv, 'teosVolPct')
-df = add_column(df, csv, 'thickness')
 
 try:
     # Training dataset
-    df['quality2']    = calc_quality(csv)
-    df['quality1']    = csv.quality
-    df['lobefrac']    = calc_lobe_fraction(csv)
-    df['fullfrac']    = calc_full_fraction(csv)
+    df['quality']    = csv.quality
+    df['lobe']    = calc_lobe_fraction(csv)
+    df['full']    = calc_full_fraction(csv)
+    df['other']   = calc_other_fraction(csv)
 except:
     # Testing dataset
-    df = add_column(df, csv, 'lobefrac')
-    df = add_column(df, csv, 'fullfrac')
+    df = add_column(df, csv, 'lobe')
+    df = add_column(df, csv, 'full')
+    df = add_column(df, csv, 'other')
 
 # Save
 pd.DataFrame(df).to_csv(out, index=False)

@@ -29,9 +29,9 @@ def models(xlen):
     lr = LinearRegression()
     kern = kernels.RBF(length_scale=[1.0] * xlen) + kernels.WhiteKernel()
     gpr = GaussianProcessRegressor(kernel=kern)
-    rfr = RandomForestRegressor(n_estimators=1000, random_state=42)
+    rfr = RandomForestRegressor(n_estimators=10, random_state=42)
 
-    return [lr, gpr, rfr]
+    return [lr, rfr]
 
 def run_kfold_cv(K, xlen, name, *args):
     """ Run K-fold on the given models and dataset """
@@ -42,7 +42,7 @@ def run_kfold_cv(K, xlen, name, *args):
             ml.FitModel(reg)
             res = ml.ParityAndResidual(show=cargs.show)
             results.add(name = name, model = ml.Name, K = K,
-                        fold = fold, r2 = res['R2'], rmse = np.sqrt(res['MSE']))
+                        fold = fold, R2 = res['R2'], RMSE = np.sqrt(res['MSE']))
 
 #%% Load data
 mice = pd.read_csv("Data/imputed_data.mice.csv")
@@ -56,20 +56,26 @@ xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
 fnAgg = []
 fnAgg = [features.Differences]
 
-# %%
-# Select target data
-compObs = mice[mice["imp"] == 0].dropna()
-
 # %% Run
-run_kfold_cv(5, len(xcols), "completeObs",
+
+K = 3 # number of CV folds
+
+compObs = mice[mice["imp"] == 0].dropna()
+run_kfold_cv(K, len(xcols), "completeObs",
              compObs, xcols, ycol, fnAgg)
+
+for i in range(1, 6):
+    name = "imputedObs%d" %i
+    imputedObs = mice[mice["imp"] == 1]
+    run_kfold_cv(K, len(xcols), name,
+                imputedObs, xcols, ycol, fnAgg)
 
 
 # %% Print and save the metrics
 print(results)
 
-summary = results.df.groupby(['name', 'model']).agg([np.mean, np.std])
+summary = utils.summarize_results(results.df, ["model", "K", "name"], imputeCol="name", ignoreValues="completeObs")
 print(summary)
 
-summary.to_csv(output, index=True)
+summary.to_csv(output, index=False)
 print("Save OK:", output)

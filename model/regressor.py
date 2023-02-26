@@ -134,6 +134,5 @@ class Regressor(pipeline.Pipeline):
 def New(df, xcols, ycol, fnlist):
     reg = Regressor(df)
     reg.SetColumns(xcols, ycol)
-    reg.AddFeatures(fnlist)
-    reg.Split()
+    reg.AddFeatures(fnlist, show_list=False)
     return reg

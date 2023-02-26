@@ -275,7 +275,6 @@ class Pipeline:
         self.Tr = Tr 
         self.Ts = Ts
 
-        print("Split OK:")
         print("\t %d rows for testing" %Ts.shape[0])
         print("\t %d rows for training" %Tr.shape[0])
 

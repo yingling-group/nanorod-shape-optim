@@ -27,7 +27,7 @@ class Regressor(pipeline.Pipeline):
 
         return yp
         
-    def Fitness(self, Ts = None, save = False):
+    def Fitness(self, Ts = None, output = None, show = True):
         """ Calculate and plot fitness of the given test dataset.
             If not dataset is given, use the splitted test dataset.
         """
@@ -72,11 +72,14 @@ class Regressor(pipeline.Pipeline):
 
         plt.suptitle(self.Name)
         plt.tight_layout()
-        if save:
-            plt.savefig(save, dpi=600)
-            plt.close(fig)
-        else:
+        if output:
+            plt.savefig(output, dpi=600)
+            plt.close()
+            print("Save OK:", output)
+        if show:
             plt.show()
+        else:
+            plt.close()
             
         return {
             'model': self.Name,
@@ -84,7 +87,7 @@ class Regressor(pipeline.Pipeline):
             'MSE': MSE
         }
 
-    def ParityAndResidual(self, Ts = None, output = None):
+    def ParityAndResidual(self, Ts = None, output = None, show = True):
         """ Plot parity and residuals of the given test dataset.
             If not dataset is given, use the splitted test dataset.
         """
@@ -117,8 +120,10 @@ class Regressor(pipeline.Pipeline):
             plt.savefig(output, dpi=600)
             plt.close()
             print("Save OK:", output)
-        else:
+        if show:
             plt.show()
+        else:
+            plt.close()
         return {
             'model': self.Name,
             'R2': R2,

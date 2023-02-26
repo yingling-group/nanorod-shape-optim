@@ -3,7 +3,7 @@ library(data.table)
 library(Amelia)
 library(corrplot)
 
-raw <- fread("Data/training_spectra.csv")
+raw <- fread("Data/all_spectra.csv")
 str(raw)
 svg("Plots/MissingMap.svg")
 missmap(raw)

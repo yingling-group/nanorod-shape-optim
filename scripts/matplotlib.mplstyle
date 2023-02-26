@@ -1,0 +1,70 @@
+# Matplotlib style for Jupyter notebooks
+
+# Default colors
+# axes.prop_cycle : cycler(color='bkrcgmyk')
+
+# Black Blue Red Purple Green Cyan Magenta Yellow
+axes.prop_cycle : cycler('color', ["333333", "2060cc", "e90000", "8a5aca", "20aa20", "00ddee", "m", "e4a635"])
+
+# Set default figure size
+figure.figsize : 3.25, 2.2
+figure.dpi: 300
+
+# Set x axis
+xtick.direction : in
+xtick.major.size : 4
+xtick.major.width : 1.0
+xtick.minor.size : 1.5
+xtick.minor.width : 1.0
+xtick.minor.visible : True
+xtick.top : True
+
+# Set y axis
+ytick.direction : in
+ytick.major.size : 4
+ytick.major.width : 1.0
+ytick.minor.size : 1.5
+ytick.minor.width : 1.0
+ytick.minor.visible : True
+ytick.right : True
+
+# Fontsizes
+xtick.labelsize : 9
+ytick.labelsize : 9
+legend.fontsize : 9
+legend.title_fontsize : 10
+axes.titlesize : 10
+axes.labelsize : 10
+
+# Set line widths
+axes.linewidth : 0.8
+lines.linewidth : 1.0
+
+# Font Families
+# Mathtext will be used when $math$ is specified
+# font.family : STIXGeneral
+font.family : Helvetica
+# font.family : DejaVu Sans
+# font.family : Palatino Linotype
+# font.family : CMU Serif
+mathtext.fontset : dejavusans
+# mathtext.fontset : dejavuserif
+# mathtext.fontset : cm
+
+# Use LaTeX for formatting
+text.usetex : False
+
+# Remove legend frame
+legend.frameon : False
+
+# Always save as 'tight'
+savefig.bbox : tight
+savefig.pad_inches : 0.05
+
+# Grid lines
+axes.grid : False
+axes.axisbelow : True
+grid.linestyle : --
+grid.color : k
+grid.alpha : 0.3
+grid.linewidth : 0.5

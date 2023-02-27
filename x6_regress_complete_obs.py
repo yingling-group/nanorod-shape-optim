@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
+import xgboost as xgb
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -24,14 +25,23 @@ output = "Data/K-fold_cv_summary_regression.csv"
 results = utils.dfBuilder()
 
 # %%
+xgparams = {
+    'max_depth': 2,
+    'n_estimators': 1000,
+    'eta': 0.05,
+    'objective': 'reg:squarederror'
+}
+
+
 # Define the models to run
 def models(xlen):
     lr = LinearRegression()
     kern = kernels.RBF() + kernels.WhiteKernel()
     gpr = GaussianProcessRegressor(kernel=kern)
     rfr = RandomForestRegressor(n_estimators=100, random_state=42)
+    xgbr = xgb.XGBRegressor(**xgparams)
 
-    return [lr, rfr, gpr]
+    return [lr, rfr, gpr, xgbr]
 
 def run_kfold_cv(K, xlen, name, *args):
     """ Run K-fold on the given models and dataset """
@@ -47,9 +57,6 @@ def run_kfold_cv(K, xlen, name, *args):
 #%% Load data
 mice = pd.read_csv("Data/imputed_data.mice.csv")
 
-# Shuffle the data
-mice = mice.sample(frac=1.0)
-
 # Specify the features and target
 ycol = "lobe"
 xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
@@ -64,12 +71,20 @@ fnAgg = [features.Differences]
 K = 3 # number of CV folds
 
 compObs = mice[mice["imp"] == 0].dropna()
+
+# Shuffle the data
+compObs = compObs.sample(frac=1.0)
+
 run_kfold_cv(K, len(xcols), "completeObs",
              compObs, xcols, ycol, fnAgg)
 
 for i in range(1, 6):
     name = "imputedObs%d" %i
-    imputedObs = mice[mice["imp"] == 1]
+    imputedObs = mice[mice["imp"] == i]
+
+    # Shuffle the data
+    imputedObs = imputedObs.sample(frac=1.0)
+
     run_kfold_cv(K, len(xcols), name,
                 imputedObs, xcols, ycol, fnAgg)
 

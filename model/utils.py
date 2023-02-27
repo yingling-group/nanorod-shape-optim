@@ -25,14 +25,15 @@ class dfBuilder:
         return str(self.df)
 
 
-def summarize_results(res, groupBy, imputeCol = None, ignoreValues = None):
+def summarize_results(res, groupBy, imputeCol = None, ignoreValues = None, includeIndividual=True):
     """ Summarize the results of K-fold CV. 
         If imputeCol is given, also summarize the results of imputed data and using ignoreValues.
     """
+    completeSummary = res.groupby(groupBy).agg([np.mean, np.std])
+    completeSummary.columns = completeSummary.columns.map('|'.join).str.strip('|')
+    completeSummary = completeSummary.reset_index()
+
     if imputeCol is None:
-        completeSummary = res.groupby(groupBy).agg([np.mean, np.std])
-        completeSummary.columns = completeSummary.columns.map('|'.join).str.strip('|')
-        completeSummary = completeSummary.reset_index()
         return completeSummary
     else:
         assert ignoreValues is not None, "value for the complete observations needed in column '%s'" %imputeCol
@@ -64,19 +65,27 @@ def summarize_results(res, groupBy, imputeCol = None, ignoreValues = None):
         variances.columns = [col.replace("|mean", "|var") for col in variances.columns]
         total = means.add(prefactor * variances, fill_value = 0)
 
-        # Add name and sort column names as original
-        total[imputeCol] = "imputedObs"
-        total = total.reset_index()
-
-        # calculate summary of the complete columns
-        completeSummary = res.groupby(groupBy + [imputeCol]).agg([np.mean, np.var])
-        completeSummary.columns = completeSummary.columns.map('|'.join).str.strip('|')
-        completeSummary = completeSummary.reset_index()
-        total = pd.concat([total, completeSummary], ignore_index=True)[completeSummary.columns]
-
         # Calculate standard deviations
         stdDev = total.loc[:, total.columns.str.endswith("|var")].apply(np.sqrt)
         stdDev.columns = [col.replace("|var", "|std") for col in stdDev.columns]
         total = pd.concat([total, stdDev], axis=1)
+
+        # Remove the variance columns
+        varCols = total.columns[total.columns.str.endswith("|var")]
+        total = total.drop(columns=varCols)
+
+        # Add name and sort column names as the original
+        total[imputeCol] = "imputedObs"
+        total = total.reset_index()
+
+        # Other observations
+        if includeIndividual:
+            completeSummary = res.groupby(groupBy + [imputeCol]).agg([np.mean, np.std])
+        else:
+            completeSummary = res[~imputeMask].groupby(groupBy + [imputeCol]).agg([np.mean, np.std])
+        completeSummary.columns = completeSummary.columns.map('|'.join).str.strip('|')
+        completeSummary = completeSummary.reset_index()
+
+        total = pd.concat([total, completeSummary], ignore_index=True)[completeSummary.columns]
 
         return total.sort_values(groupBy + [imputeCol])

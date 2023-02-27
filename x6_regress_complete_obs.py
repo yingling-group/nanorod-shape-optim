@@ -27,11 +27,11 @@ results = utils.dfBuilder()
 # Define the models to run
 def models(xlen):
     lr = LinearRegression()
-    kern = kernels.RBF(length_scale=[1.0] * xlen) + kernels.WhiteKernel()
+    kern = kernels.RBF() + kernels.WhiteKernel()
     gpr = GaussianProcessRegressor(kernel=kern)
-    rfr = RandomForestRegressor(n_estimators=10, random_state=42)
+    rfr = RandomForestRegressor(n_estimators=100, random_state=42)
 
-    return [lr, rfr]
+    return [lr, rfr, gpr]
 
 def run_kfold_cv(K, xlen, name, *args):
     """ Run K-fold on the given models and dataset """
@@ -46,6 +46,9 @@ def run_kfold_cv(K, xlen, name, *args):
 
 #%% Load data
 mice = pd.read_csv("Data/imputed_data.mice.csv")
+
+# Shuffle the data
+mice = mice.sample(frac=1.0)
 
 # Specify the features and target
 ycol = "lobe"
@@ -74,7 +77,8 @@ for i in range(1, 6):
 # %% Print and save the metrics
 print(results)
 
-summary = utils.summarize_results(results.df, ["model", "K", "name"], imputeCol="name", ignoreValues="completeObs")
+summary = utils.summarize_results(results.df, ["model", "name", "K"],
+                                  imputeCol="name", ignoreValues="completeObs", includeIndividual=False)
 print(summary)
 
 summary.to_csv(output, index=False)

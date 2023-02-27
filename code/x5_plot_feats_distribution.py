@@ -1,4 +1,5 @@
 # %%
+import argparse
 import pandas as pd 
 from model import plotlib, features
 
@@ -7,6 +8,13 @@ try:
     plt.style.use("matplotlib.mplstyle")
 except:
     pass
+
+parser = argparse.ArgumentParser(
+    description = 'Plot and save correlation and distribution of features',
+    epilog = 'Author: Akhlak Mahmood, Yingling Group, NCSU')
+
+parser.add_argument('--show', help="Display the plots", action="store_true")
+cargs = parser.parse_args()
 
 # %% Load data
 data = pd.read_csv("Data/imputed_data.mice.csv")
@@ -33,6 +41,14 @@ plotlib.corrplot(
     output="Plots/pearson_corr.observed.png",
 )
 
+shifts = features.Differences(dobs).drop(columns=dobs.columns)
+plotlib.corrplot(
+    shifts,
+    method="pearson",
+    output="Plots/pearson_corr_shifts.observed.png",
+)
+
+
 plotlib.corrplot(
     dobs.drop(columns=["id", "imp", "quality"]),
     method="spearman",
@@ -46,6 +62,15 @@ plotlib.corrplot(
     output="Plots/pearson_corr.imputed.png",
 )
 
+
+shifts = features.Differences(dimp).drop(columns=dimp.columns)
+plotlib.corrplot(
+    shifts,
+    method="pearson",
+    output="Plots/pearson_corr_shifts.imputed.png",
+)
+
+
 plotlib.corrplot(
     dimp.drop(columns=["id", "imp", "quality"]),
     method="spearman",
@@ -53,7 +78,7 @@ plotlib.corrplot(
 )
 
 # %% Histrogram of the features
-def plot_origFeat_histograms(df, output = None, show=False):
+def plot_origFeat_histograms(df, output = None):
     colors = ["#333c", "#c00c", "#0ccc"]
     fig, ax = plt.subplots(4, 3, figsize=(6, 5))
     for i in range(3):
@@ -75,7 +100,7 @@ def plot_origFeat_histograms(df, output = None, show=False):
     if output:
         plt.savefig(output, dpi=600)
         print("Save OK:", output)
-    if show:
+    if cargs.show:
         plt.show()
     else:
         plt.close()
@@ -84,7 +109,7 @@ plot_origFeat_histograms(dobs, "Plots/origFeats_dist.observed.png")
 plot_origFeat_histograms(dimp, "Plots/origFeats_dist.imputed.png")
 
 # %% Aggregate features
-def plot_shifted_histograms(df, output = None, show=True):
+def plot_shifted_histograms(df, output = None):
     colors = ["#c00c", "#0ccc"]
     shifts = ["21", "32"]
 
@@ -110,7 +135,7 @@ def plot_shifted_histograms(df, output = None, show=True):
     if output:
         plt.savefig(output, dpi=600)
         print("Save OK:", output)
-    if show:
+    if cargs.show:
         plt.show()
     else:
         plt.close()

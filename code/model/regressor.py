@@ -12,6 +12,9 @@ class Regressor(pipeline.Pipeline):
         super(Regressor, self).__init__(df)
 
     def Predict(self, df):
+        """ Make prediction on a given dataframe.
+            Handle scaling and unscaling.
+        """
         assert isinstance(df, pd.DataFrame), f"df must be a DataFrame, not {type(df)}"
         assert self.model != None, "Please train a model first"
         for c in self.xCols:
@@ -87,19 +90,28 @@ class Regressor(pipeline.Pipeline):
             'MSE': MSE
         }
 
-    def ParityAndResidual(self, Ts = None, output = None, show = True):
-        """ Plot parity and residuals of the given test dataset.
+
+    def Score(self, Ts = None):
+        """ Calculate R2 and MSE of the given test dataset.
             If not dataset is given, use the splitted test dataset.
         """
         Ts = self._prep_df(Ts)
         assert self.yCol in Ts.columns, "Ts does not contain the response"
 
-        # Scale
         y = Ts[self.yCol]
         p = self.Predict(Ts)
 
         R2 = r2_score(y, p)
         MSE = mean_squared_error(y, p)
+        
+        return R2, MSE, y, p
+        
+
+    def ParityAndResidual(self, Ts = None, output = None, show = True):
+        """ Plot parity and residuals of the given test dataset.
+            If not dataset is given, use the splitted test dataset.
+        """
+        R2, MSE, y, p = self.Score(Ts)
 
         # Plot
         fig, ax = plt.subplots(1, 2, figsize=(6, 2.5), sharey=False)
@@ -130,9 +142,76 @@ class Regressor(pipeline.Pipeline):
             'MSE': MSE
         }
 
-
 def New(df, xcols, ycol, fnlist):
     reg = Regressor(df)
-    reg.SetColumns(xcols, ycol)
     reg.AddFeatures(fnlist, show_list=False)
+    reg.SetColumns(xcols, ycol)
     return reg
+
+class EnsembleRegressor:
+    """ Class to train models on multiple imputed dataframes. """
+
+    def __init__(self, name, xcols, ycol, fnlist):
+        self.name = name
+        self.xCols = xcols
+        self.yCol = ycol
+        self.fnList = fnlist
+        
+        # Trained models
+        self.models = []
+        
+    def TrainOnData(self, dframes, alg):
+        """ Pass a list of data frames and an algorithm object to train models.
+            A separate model will be trained on each dataframe.
+        """
+        assert isinstance(dframes, list)
+
+        for df in dframes:
+            ml = New(df, self.xCols, self.yCol, self.fnList)
+            # construct the regressor
+            regressor = alg[0](**alg[1])
+            ml.FitModel(regressor)
+            self.models.append(ml)
+            
+    def Predict(self, Ts):
+        pdf = {}
+        for i, ml in enumerate(self.models):
+            Ts = ml._prep_df(Ts)
+            pred = ml.Predict(Ts)
+            pdf['pred%d' %i] = pred
+
+        pdf = pd.DataFrame(pdf)
+        return pdf.mean(axis=1)
+
+    def Score(self, Ts):
+        y = Ts[self.yCol]
+        p = self.Predict(Ts)
+        R2 = r2_score(y, p)
+        MSE = mean_squared_error(y, p)
+        return R2, MSE, y, p
+
+    def ParityScore(self, Ts, savePrefix = None, show = True):
+        R2, MSE, y, p = self.Score(Ts)
+
+        fig, ax = plt.subplots(1, 1, figsize=(3.25, 2.5))
+        ax.plot(y, p, 'rx')
+        dline = np.linspace(*ax.get_xlim())
+        ax.plot(dline, dline, 'k--')
+        ax.set_xlabel("Truth")
+        ax.set_ylabel("%s Prediction" %self.name)
+        ax.set_title("R2 = %0.2f, RMSE = %0.2f" %(R2, np.sqrt(MSE)))
+
+        plt.tight_layout()
+        if savePrefix:
+            plt.savefig("%s.%s.png" %(savePrefix, self.name), dpi=600)
+        if show:
+            plt.show()
+        else:
+            plt.close()
+
+        return {
+            'R2': R2,
+            'MSE': MSE,
+            'pred': p,
+        }
+

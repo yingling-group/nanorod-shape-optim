@@ -6,6 +6,56 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+import warnings
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+def calc_vif(df):
+    """ Calculate and return a DataFrame of VIF of the columns for the given df. """
+
+    X = df.dropna().select_dtypes(include='number') #will include all the numeric types
+    vif = pd.DataFrame()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        vif['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    vif['Feature'] = X.columns
+    vif = vif.set_index('Feature').dropna()
+    vif = vif.sort_values('VIF', ascending=False).T
+    return vif.round(2)
+
+def find_noncollinear_features(df, x0, columns, vif_cutoff, return_failed = False):
+    """ Try to add columns one by one to dataframe without creating multicollinearity.
+        Return the list of features that passed the VIF check.
+        Use standard scaled values to reduce VIF.
+    """
+
+    candidate = []
+    collinear = []
+    
+    # Python passes lists by reference
+    passed = x0.copy()
+    
+    for col in columns:
+        if col in passed:
+            continue
+        try:
+            vif = calc_vif(df[passed + [col]]).drop(col, axis=1)
+        except:
+            continue
+        if vif.iloc[0, 0] < vif_cutoff:
+            passed.append(col)
+        else:
+            candidate.append(col)
+            collinear.append(vif.columns[0])
+
+    failed = pd.DataFrame({'linearColumn': collinear}, index=candidate)
+
+    # vif table, table of failed features
+    if return_failed:
+        return calc_vif(df[passed]), failed
+    else:
+        return calc_vif(df[passed])
+
+
 class Pipeline:
     """ A class to handle pandas DataFrames and maintain the train/test pipeline """
 
@@ -25,6 +75,15 @@ class Pipeline:
         self.xCols = None 
         self.yCol = None
         self.model = None
+
+    def NonCollinearFeatures(self, keepCols = [], ignoreCols = [], vif_cutoff = 8):
+        """ Return the best features that do not create multicollinearity.
+            @Todo: remove this method.
+        """
+        df = self.Tr.drop(ignoreCols, axis=1)
+        sclr = StandardScaler().fit(df)
+        sdf = pd.DataFrame(sclr.transform(df), index=df.index, columns=df.columns)
+        return find_noncollinear_features(sdf, keepCols, df.columns, vif_cutoff)
 
     def SetColumns(self, xcols, ycol = None):
         """ Specify the x and y columns of the training dataset """
@@ -104,8 +163,8 @@ class Pipeline:
             oldfeats = self.Tr.columns
             self.Tr = fn(self.Tr)
             newfeats = self.Tr.columns.difference(oldfeats)
-            print("%s() added %d new features." %(fn.__name__, len(newfeats)))
             if show_list:
+                print("%s() added %d new features." %(fn.__name__, len(newfeats)))
                 print(list(newfeats), "\n")
             self.featFns.append(fn)
 

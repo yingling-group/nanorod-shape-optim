@@ -26,8 +26,8 @@ results = utils.dfBuilder()
 
 # %%
 xgparams = {
-    'max_depth': 2,
-    'n_estimators': 1000,
+    'max_depth': 20,
+    'n_estimators': 100,
     'eta': 0.05,
     'objective': 'reg:squarederror'
 }
@@ -41,7 +41,7 @@ def models(xlen):
     rfr = RandomForestRegressor(n_estimators=100, random_state=42)
     xgbr = xgb.XGBRegressor(**xgparams)
 
-    return [lr, rfr, gpr, xgbr]
+    return [gpr, xgbr]
 
 def run_kfold_cv(K, xlen, name, *args):
     """ Run K-fold on the given models and dataset """
@@ -57,18 +57,23 @@ def run_kfold_cv(K, xlen, name, *args):
 #%% Load data
 mice = pd.read_csv("Data/imputed_data.mice.csv")
 
-# Specify the features and target
-ycol = "lobe"
-xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
-         'lsfw2', 'tsfw2', 'lspk3', 'tspk3', 'lsfw3', 'tsfw3']
+# Specify the target
+ycol = "full"
 
-# Feature aggregation function
-fnAgg = []
-fnAgg = [features.Differences]
+# Find the non-collinear features
+fnAgg = [features.Differences, features.InverseDifferences]
+df = mice[mice.imp >= 0].dropna().drop(['imp', 'id'], axis=1).set_index('name')
+reg = regressor.Regressor(df)
+reg.AddFeatures(fnAgg, show_list=False)
+feats = reg.NonCollinearFeatures(keepCols=['teosVolPct', 'teosVolume'],
+                                 ignoreCols=['lobe', 'full', 'other', 'quality'])
+
+feats.to_csv("Data/selected_features.csv")
+xcols = list(feats.columns)
 
 # %% Run
 
-K = 3 # number of CV folds
+K = 6 # number of CV folds
 
 compObs = mice[mice["imp"] == 0].dropna()
 
@@ -98,3 +103,4 @@ print(summary)
 
 summary.to_csv(output, index=False)
 print("Save OK:", output)
+print(feats)

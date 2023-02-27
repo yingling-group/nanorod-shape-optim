@@ -31,7 +31,7 @@ def Differences(idf):
     )
 
 def InverseDifferences(idf):
-    return (idf
+    df = (idf
            # peak shift
            .assign(ilp21 = lambda df: 1.0 / df.lp21)
            .assign(ilp31 = lambda df: 1.0 / df.lp31)
@@ -61,3 +61,8 @@ def InverseDifferences(idf):
            .assign(idw31 = lambda df: 1.0 / df.dw31)
            .assign(idw32 = lambda df: 1.0 / df.dw32)
            )
+
+    import numpy as np
+    infcols = np.isinf(df.select_dtypes(include='number')).sum()
+    infcols = infcols[infcols > 0]
+    return df.drop(infcols.index, axis=1)

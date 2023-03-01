@@ -1,13 +1,12 @@
 # %%
 import argparse
+import numpy as np
 import pandas as pd 
 from model import plotlib, features
 
-import matplotlib.pyplot as plt 
-try:
-    plt.style.use("matplotlib.mplstyle")
-except:
-    pass
+import matplotlib.pyplot as plt
+plt.style.use("matplotlib.mplstyle")
+
 
 parser = argparse.ArgumentParser(
     description = 'Plot and save correlation and distribution of features',
@@ -41,7 +40,9 @@ plotlib.corrplot(
     output="Plots/pearson_corr.observed.png",
 )
 
-shifts = features.Differences(dobs).drop(columns=dobs.columns)
+# Drop the original X columns
+toDrop = dobs.columns.difference(["full", "lobe", "other"])
+shifts = features.Differences(dobs).drop(columns=toDrop)
 plotlib.corrplot(
     shifts,
     method="pearson",
@@ -62,8 +63,9 @@ plotlib.corrplot(
     output="Plots/pearson_corr.imputed.png",
 )
 
-
-shifts = features.Differences(dimp).drop(columns=dimp.columns)
+# Drop the original X columns
+toDrop = dimp.columns.difference(["full", "lobe", "other"])
+shifts = features.Differences(dimp).drop(columns=toDrop)
 plotlib.corrplot(
     shifts,
     method="pearson",
@@ -76,6 +78,31 @@ plotlib.corrplot(
     method="spearman",
     output="Plots/spearman_corr.imputed.png",
 )
+
+# %% Histrogram of the outputs
+def plot_response_histograms(df, output = None):
+    colors = ["#333c", "#c00c", "#0ccc"]
+    fig, ax = plt.subplots(1, 3, figsize=(6, 2.1), sharex=True)
+    for j, colname in enumerate(['full', 'lobe', 'other']):
+        ax[j].hist(df[colname], color = colors[j], density=True, label = colname.capitalize())
+        # ax[j].set(xlabel = colname.capitalize())
+        ax[j].legend(prop={'family': 'cursive'})
+
+    ax[0].set(ylabel = "Frequency", xticks=np.arange(0, 1.01, 0.25))
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.18)
+    if output:
+        plt.savefig(output)
+        print("Save OK:", output)
+    if cargs.show:
+        plt.show()
+    else:
+        plt.close()
+        
+# %%
+plot_response_histograms(dobs, "Plots/respFeats_dist.observed.png")
+plot_response_histograms(dimp, "Plots/respFeats_dist.imputed.png")
+
 
 # %% Histrogram of the features
 def plot_origFeat_histograms(df, output = None):
@@ -91,7 +118,7 @@ def plot_origFeat_histograms(df, output = None):
         ax[j, 1].sharex(ax[j, 0])
         ax[j, 2].sharex(ax[j, 0])
 
-    step_names = ["AuNR in H$2$O", "After reaction", "After purification"]
+    step_names = ["AuNR in $H_2 O$", "After reaction", "After purification"]
     for i in range(3):
         ax[0, i].set(title = step_names[i])
 

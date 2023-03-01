@@ -1,26 +1,18 @@
-import sys 
+import warnings
+import sys
 import numpy as np
+import itertools
+from typing import Iterable
+
 import pandas as pd 
 import matplotlib.pyplot as plt 
 
+from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 import warnings
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-
-def calc_vif(df):
-    """ Calculate and return a DataFrame of VIF of the columns for the given df. """
-
-    X = df.dropna().select_dtypes(include='number') #will include all the numeric types
-    vif = pd.DataFrame()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        vif['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
-    vif['Feature'] = X.columns
-    vif = vif.set_index('Feature').dropna()
-    vif = vif.sort_values('VIF', ascending=False).T
-    return vif.round(2)
 
 def find_noncollinear_features(df, x0, columns, vif_cutoff, return_failed = False):
     """ Try to add columns one by one to dataframe without creating multicollinearity.
@@ -100,6 +92,7 @@ class Pipeline:
             try:
                 self.ysclr = StandardScaler().fit(self.Tr[[ycol]].values)
             except ValueError:
+                # print("Warning -- Y standard scaling failed.")
                 pass
 
     def _scaleX(self, X):
@@ -216,9 +209,86 @@ class Pipeline:
 
         return Ts
 
-    def Augment(self, cols, df = None, K = 3, qcol = "quality", scale = 0.2,
+    def Predict(self, df):
+        assert isinstance(df, pd.DataFrame), f"df must be a DataFrame, not {type(df)}"
+        assert self.model != None, "Please train a model first"
+        for c in self.xCols:
+            assert c in df.columns, \
+                f"Column not found: {c}, please call PrepPrediction() first"
+
+        X = df[self.xCols]
+        X = self._scaleX(X)
+
+        yp = self.model.predict(X)
+        yp = pd.Series(yp, name=self.yCol, index = X.index)
+        yp = self._unscaleY(yp)
+
+        return yp
+    
+    def HypParamSearch(self, hyperparams, scoring, grid = False, cv = 5, Ts = None):
+        """ Follow the same style as GridSearchCV. Give a test dataset
+            to include it in the CV process, else use the training set only.
+        """
+        if grid:
+            print("Running grid search", end = " ... ")
+            clf = GridSearchCV(self.model, hyperparams, cv=cv,
+                               n_jobs = -1,
+                               scoring = scoring,
+                              )
+        else:
+            print("Running randomized search", end = " ... ")
+            clf = RandomizedSearchCV(self.model, hyperparams, cv = cv,
+                                     n_iter = 100,
+                                     n_jobs = -1,
+                                     scoring = scoring,
+                                    )
+
+        X = self._scaleX(self.Tr)
+        y = self._scaleY(self.Tr[self.yCol])
+        if Ts is not None:
+            Ts = self._prep_df(Ts)
+            xts = self._scaleX(Ts)
+            yts = self._scaleY(Ts[self.yCol])
+            X = pd.concat([X, xts])
+            y = pd.concat([y, yts])
+
+        best = clf.fit(X, y)
+        print("OK")
+        print("best score:", best.best_score_)
+        return best
+
+    def FeatureSearch(self, scoring, direction, cv = 5, Ts = None, tol=None):
+        """ Find the best features using SequentialFeatureSelector.
+            Give a test dataset to include it in the CV process,
+            else use the training set only.
+        """
+        print("Running features search", end = " ... ")
+        clf = SequentialFeatureSelector(self.model,
+                                        direction = direction,
+                                        cv=cv,
+                                        n_jobs = -1,
+                                        n_features_to_select = 15 if tol is None else 'auto',
+                                        tol = tol,
+                                        scoring = scoring)
+
+        X = self._scaleX(self.Tr)
+        y = self._scaleY(self.Tr[self.yCol])
+        if Ts is not None:
+            Ts = self._prep_df(Ts)
+            xts = self._scaleX(Ts)
+            yts = self._scaleY(Ts[self.yCol])
+            X = pd.concat([X, xts])
+            y = pd.concat([y, yts])
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            best = clf.fit(X, y)
+        print("OK")
+        print("best features:", list(X.columns[best.support_]))
+        return X.columns[best.support_]
+
+    def Augment(self, cols, df, K = 3, qcol = "quality", scale = 0.2,
                                             plot = True, save = False):
-        if df is None: df = self.out
         assert K <= 5, "Too high value of K will make dataset invalid"
         if save:
             assert isinstance(save, str), "Please provide a filename."
@@ -354,3 +424,90 @@ class Pipeline:
             
         desc += "\n]"
         return desc
+
+
+class Payload:
+    """ Payload to pass between the Adapters of a GridLine """
+    def __init__(self, **kwargs):
+        self.Tr = None
+        self.Ts = None
+        self.xCols = None 
+        self.yCol = None
+        self.xsclr = None 
+        self.ysclr = None
+
+    def __repr__(self):
+        return "Tr Head:\n" + repr(self.Tr.head())
+
+class Adapter:
+    """ The Adapter class to be overridden by each GridLine item. """
+    def NewLine(self, pl):
+        # Called on each new pipeline
+        # Override if needed, make sure to call super()
+        self.output = ""
+
+    def __repr__(self):
+        pkg = str(self.__class__).split("'")[1]
+        if "." in pkg:
+            pkg = pkg.split(".")[-1]
+        return pkg + "()"
+
+    def sayf(self, msg, *args, **kwargs):
+        eol = "\n"
+        if 'end' in kwargs:
+            eol = kwargs['end']
+        self.output += msg.format(*args) + eol
+
+    def _report(self):
+        if len(self.output) == 0:
+            return None
+        else:
+            out = "\n" + self.output
+            out = out.replace("\n", "\n\t ")
+            return out.rstrip()
+
+    def Process(self, X):
+        pass
+
+
+class GridLine:
+    """ Define a list of Adapters, whose Process() methods will be
+        called one after another with previous result being passed on. """
+    def __init__(self, grid):
+        self.grid = []
+        self.results = []
+        for item in grid:
+            if isinstance(item, Iterable):
+                self.grid.append(item)
+            else:
+                self.grid.append([item])
+        self.grid = itertools.product(*self.grid)
+
+    def _pipeline(self, i, pipe, X):
+        for adapter in pipe:
+            if adapter is None:
+                continue
+            assert isinstance(adapter, Adapter)
+            print(" --", adapter, end = " ... ")
+            adapter.NewLine(X)
+            X = adapter.Process(X)
+            rep = adapter._report()
+            if rep:
+                print(rep, end="\n\n")
+            else:
+                print("ok")
+
+        # final payload
+        return X
+
+    def Execute(self, X):
+        self.results = []
+        for i, pipe in enumerate(self.grid):
+            print("Pipeline %02d:" %(i+1))
+            if hasattr(X, 'copy'):
+                xclone = X.copy()
+            else:
+                xclone = X
+            res = self._pipeline(i+1, pipe, xclone)
+            self.results.append(res)
+            print("Done %02d.\n" %(i+1))

@@ -142,16 +142,18 @@ dir.create("Plots", showWarnings = FALSE)
 
 kstable %>% 
     select(-mean.ks.pval) %>% 
+    filter(mean.ks.dist > 0) %>%
     ggplot(aes(y=param, x=mean.ks.dist, fill=param)) +
         geom_bar(stat="identity", col='black') +
-        # geom_errorbar(aes(xmin=mean.ks.dist-sd.ks.dist, xmax=mean.ks.dist+sd.ks.dist),
-        #               width=.2, position=position_dodge(.9)) +
+        geom_errorbar(aes(xmin=mean.ks.dist-sd.ks.dist, xmax=mean.ks.dist+sd.ks.dist),
+                      width=.2, position=position_dodge(.9)) +
         geom_vline(xintercept = 0.04301, lty=2, col='red') +
-        xlim(0, 0.15) +
-        theme_bw() + ylab("") + xlab("Kolmogorov-Smirnov test statistic") +
+        xlim(0, 0.1) +
+        theme_bw() +
+        ylab("") + xlab("Kolmogorov-Smirnov test statistic") +
         theme(legend.position = "none")
 
-ggsave("Plots/ks.dist_barplots.mice.svg")
+ggsave("Plots/ks.dist_barplots.mice.svg", height=4, width=3.25)
 
 print("All Done!")
 

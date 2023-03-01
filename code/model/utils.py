@@ -1,8 +1,10 @@
 import numpy as np 
 import pandas as pd
+import warnings
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 class dfBuilder:
-    """ Build a pandas dataframe """
+    """ Build a pandas dataframe one row at a time. """
     def __init__(self):
         self.dict = {}
         self.rows = 0
@@ -89,3 +91,17 @@ def summarize_results(res, groupBy, imputeCol = None, ignoreValues = None, inclu
         total = pd.concat([total, completeSummary], ignore_index=True)[completeSummary.columns]
 
         return total.sort_values(groupBy + [imputeCol])
+
+
+def calc_vif(df):
+    """ Calculate and return a DataFrame of VIF of the columns for the given df. """
+
+    X = df.dropna().select_dtypes(include='number') #will include all the numeric types
+    vif = pd.DataFrame()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        vif['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    vif['Feature'] = X.columns
+    vif = vif.set_index('Feature').dropna()
+    vif = vif.sort_values('VIF', ascending=False).T
+    return vif.round(2)

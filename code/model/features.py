@@ -63,6 +63,6 @@ def InverseDifferences(idf):
            )
 
     import numpy as np
-    infcols = np.isinf(df.select_dtypes(include='number')).sum()
-    infcols = infcols[infcols > 0]
-    return df.drop(infcols.index, axis=1)
+    # reset infinite values
+    df.replace([np.inf, -np.inf], 10000, inplace=True)
+    return df

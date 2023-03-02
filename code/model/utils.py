@@ -105,3 +105,13 @@ def calc_vif(df):
     vif = vif.set_index('Feature').dropna()
     vif = vif.sort_values('VIF', ascending=False).T
     return vif.round(2)
+
+def nice_name(obj):
+    """ Extract the class name of an object or instance """
+    try:
+        cname = str(obj).split("'")[1].split(".")[-1]
+    except:
+        cname = str(obj).replace("()", "")
+        if "(" in cname:
+            cname = cname.split("(")[0]
+    return cname

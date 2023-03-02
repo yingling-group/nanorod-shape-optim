@@ -69,8 +69,14 @@ class SplitValidation(pipeline.Adapter):
         assert pl.Tr is not None
         assert pl.Tr.shape[0] > 0
 
-        pl.Tv = pl.Tr.sample(fraction = self.frac)
-        pl.Tr = pl.Tr.iloc[~pl.Tv.index, :]
+        pl.Tv = pl.Tr.sample(frac = self.frac)
+        pl.Tr = pl.Tr[~pl.Tr.index.isin(pl.Tv.index)]
 
         self.sayf("Training shape: {}, Validation shape: {}", pl.Tr.shape, pl.Tv.shape)
         return pl
+
+
+class Stop(pipeline.Adapter):
+    """ Stop execution of the pipeline (for debugging). """
+    def Process(self, pl):
+        raise BrokenPipeError("Stop requested")

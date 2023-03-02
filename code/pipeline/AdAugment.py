@@ -97,7 +97,7 @@ class PlotFrequency(pipeline.Adapter):
             plt.show()
 
     def Process(self, pl):
-        if self.once and self.plotted:
+        if self.plotOnce and self.plotted:
             return pl
         else:
             self._plot(pl.Tr)

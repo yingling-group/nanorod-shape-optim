@@ -10,9 +10,10 @@ from pipeline import utils
 
 class TestPerformance(pipeline.Adapter):
     """ Test the performance of a classifier. """
-    def __init__(self, savePref=None, show=True):
+    def __init__(self, savePref=None, show=True, use_validation_set = True):
         self.savePref = savePref
         self.show = show
+        self.useValidationSet = use_validation_set
         
     def _plot_confusion(self, y, p, pl):
         if not self.savePref:
@@ -70,8 +71,14 @@ class TestPerformance(pipeline.Adapter):
         return pl
 
     def Process(self, pl):
-        X = pl.Ts[pl.xCols]
-        y = pl.Ts[pl.yCol]
+        if self.useValidationSet:
+            assert pl.Tv is not None, "Validation set not defined"
+            X = pl.Tv[pl.xCols]
+            y = pl.Tv[pl.yCol]
+        else:
+            X = pl.Ts[pl.xCols] # use the test set
+            y = pl.Ts[pl.yCol]
+
         p = pl.model.predict(X)
         pl = self._calc_score(y, p, pl)
         self.sayf("SCORE: {}", pl.score)

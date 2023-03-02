@@ -38,6 +38,12 @@ class ScaleX(pipeline.Adapter):
         dft = pl.xsclr.transform(pl.Ts[tCols])
         dft = pd.DataFrame(dft, index=pl.Ts.index, columns=tCols)
         pl.Ts.update(dft)
+
+        # transform validation
+        if pl.Tv is not None:
+            dft = pl.xsclr.transform(pl.Tv[tCols])
+            dft = pd.DataFrame(dft, index=pl.Tv.index, columns=tCols)
+            pl.Tv.update(dft)
         
         return pl
 
@@ -54,10 +60,18 @@ class UnscaleX(pipeline.Adapter):
 
         else:
             tCols = pl.xCols
+        
         dft = pl.xsclr.inverse_transform(pl.Tr[tCols])
         dft = pd.DataFrame(dft, index=pl.Tr.index, columns=tCols)
         pl.Tr.update(dft)
+
         dft = pl.xsclr.inverse_transform(pl.Ts[tCols])
         dft = pd.DataFrame(dft, index=pl.Ts.index, columns=tCols)
         pl.Ts.update(dft)
+
+        if pl.Tv is not None:
+            dft = pl.xsclr.inverse_transform(pl.Tv[tCols])
+            dft = pd.DataFrame(dft, index=pl.Tv.index, columns=tCols)
+            pl.Tv.update(dft)
+
         return pl

@@ -55,3 +55,22 @@ class SetModel(pipeline.Adapter):
         self.model.fit(X, y)
         pl.model = self.model
         return pl
+
+
+class SplitValidation(pipeline.Adapter):
+    """ Split the training dataset into training and validation. """
+    def __init__(self, split_fraction = 0.2):
+        self.frac = split_fraction
+
+    def __repr__(self):
+        return "SplitValidation: %0.2f" %self.frac
+
+    def Process(self, pl):
+        assert pl.Tr is not None
+        assert pl.Tr.shape[0] > 0
+
+        pl.Tv = pl.Tr.sample(fraction = self.frac)
+        pl.Tr = pl.Tr.iloc[~pl.Tv.index, :]
+
+        self.sayf("Training shape: {}, Validation shape: {}", pl.Tr.shape, pl.Tv.shape)
+        return pl

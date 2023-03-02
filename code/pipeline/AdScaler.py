@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from . import pipeline
 from . import utils
 
+
 class ScaleX(pipeline.Adapter):
     """ Standard scale the xCols of the datasets. """
     def __init__(self, scaler=StandardScaler, allColumns = False):

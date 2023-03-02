@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 
-from . import pipeline
-from . import utils
+from . import plotlib
+import pipeline
+from pipeline import utils
+
 
 class TestPerformance(pipeline.Adapter):
     """ Test the performance of a classifier. """

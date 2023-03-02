@@ -1,13 +1,11 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.over_sampling import SMOTE, ADASYN
-from imblearn.over_sampling import BorderlineSMOTE
 
-from . import utils
 from . import pipeline
+from . import utils
 
 class AugmentImb(pipeline.Adapter):
     """ Augment the training dataset. """

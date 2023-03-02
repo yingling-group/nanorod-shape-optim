@@ -4,6 +4,7 @@ import pandas as pd
 from . import pipeline
 from . import utils
 
+
 class SetYCol(pipeline.Adapter):
     def __init__(self, ycol):
         self.ycol = ycol

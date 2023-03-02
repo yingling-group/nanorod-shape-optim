@@ -1,13 +1,11 @@
 import sys
-import warnings
 import traceback
 import itertools
 from typing import Iterable
 
-import numpy as np
 import pandas as pd
-from . import utils
 
+from . import utils
 
 class Payload:
     """ Payload to pass and share between the Adapters of a GridLine.
@@ -112,7 +110,7 @@ class GridLine:
                 self.adapters['L%02d' %(i+1)].append("")
                 continue
 
-            assert issubclass(type(adapter), Adapter), \
+            assert isinstance(adapter, Adapter), \
                 "Invalid adapter %s with type %s" %(str(adapter), type(adapter))
             
             self.adapters['L%02d' %(i+1)].append(utils.nice_name(adapter))
@@ -124,7 +122,7 @@ class GridLine:
                 print('L%02d FAILED: %s' %(i+1, err))
                 break
                 
-            assert issubclass(type(X), Payload), \
+            assert isinstance(X, Payload), \
                 "Invalid Process() return type. Payload expected."
 
         # final payload

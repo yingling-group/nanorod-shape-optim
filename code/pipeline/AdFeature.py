@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from . import pipeline
 from . import utils
 
+
 class NonCollinearFeatures(pipeline.Adapter):
     """ Set xCols based on features that do no create multicollinearity. """
     def __init__(self, keepCols = [], ignoreCols = [], vif_cutoff = 10, show=True):

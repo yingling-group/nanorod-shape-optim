@@ -16,6 +16,10 @@ import matplotlib.pyplot as plt
 
 from xgboost import XGBClassifier
 
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import SMOTE, ADASYN
+from imblearn.over_sampling import BorderlineSMOTE
+
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -31,42 +35,29 @@ from sklearn.gaussian_process import kernels, GaussianProcessClassifier
 # In[2]:
 
 
+import pipeline as pl
 from model import plotlib
-from model import pipeline
-from model import utils
-from model.AdCommon import *
-from model.AdFeature import *
-from model.AdAugment import *
-from model.AdHyperParam import *
-from model.AdScaler import *
 
 
 # In[3]:
 
 
-from model.AdClassify import *
+from model.AdData import *
+from model.AdFeatures import *
+from model.AdClassify import TestPerformance
+from model import hyperparams
 
 
 # In[4]:
 
 
 from importlib import reload
-reload(pipeline);
-
-
-# ### Project libraries
-
-# In[5]:
-
-
-from uv_vis.AdData import LoadData, ObservedData, ImputedData
-from uv_vis.AdFeatures import AggregateFeatures
-from uv_vis import hyperparams
+reload(pl)
 
 
 # ### Initialize
 
-# In[6]:
+# In[5]:
 
 
 plotlib.load_fonts("../../../common/fonts/")
@@ -76,7 +67,7 @@ inputCsv = "../Data/imputed_data.mice.csv"
 ignoreXCols = ['imp', 'id', 'quality', 'lobe', 'full', 'other', 'coatingId']
 
 
-# In[7]:
+# In[6]:
 
 
 loader = LoadData()
@@ -85,7 +76,7 @@ loader.Execute(inputCsv)
 
 # ### Define grid pipeline
 
-# In[8]:
+# In[7]:
 
 
 grid = [
@@ -94,48 +85,48 @@ grid = [
         ObservedData(),
         ImputedData()
     ),
-    SetYCol('coatingId'),
-    Set(scoring='f1_weighted'),
-    DropCol('coating'),
-    AugmentByQuality(F=2, scale=0.3, qcol='quality'),
+    pl.SetYCol('coatingId'),
+    pl.Set(scoring='f1_weighted'),
+    pl.DropCol('coating'),
     (
-        None,
-        AugmentImb(RandomOverSampler()),
-        AugmentImb(BorderlineSMOTE()),
-        AugmentImb(SMOTE()),
-        AugmentImb(ADASYN()),
-    ),
-    AggregateFeatures(show=False),
-    (
-        AllValidFeatures(ignoreCols=ignoreXCols),
-        NonCollinearFeatures(keepCols=['teosVolPct', 'teosVolume'],
+        pl.AllValidFeatures(ignoreCols=ignoreXCols),
+        pl.NonCollinearFeatures(keepCols=['teosVolPct', 'teosVolume'],
                              ignoreCols=ignoreXCols, show=False),
     ),
-    ScaleX(allColumns=False),
+    pl.AugmentByQuality(F=2, scale=0.3, qcol='quality'),
+    (
+        None,
+        pl.AugmentImb(RandomOverSampler()),
+        pl.AugmentImb(BorderlineSMOTE()),
+        pl.AugmentImb(SMOTE()),
+        pl.AugmentImb(ADASYN()),
+    ),
+    AggregateFeatures(show=False),
+    pl.ScaleX(allColumns=False),
     (
         # SetModel(RandomForestClassifier()),
-        SetModel(DecisionTreeClassifier()),
+        pl.SetModel(DecisionTreeClassifier()),
     ),
     (
         None,
-        SelectFeaturesRFE(show=True)
+        pl.SelectFeaturesRFE(show=True)
     ),
     (
         # SetModel(XGBClassifier()),
-        SetModel(KNeighborsClassifier()),
+        pl.SetModel(KNeighborsClassifier()),
         # SetModel(SVC()),
         # SetModel(GaussianProcessClassifier()),
         # SetModel(RandomForestClassifier()),
     ),
-    SearchHyperParams(hyperparams.space),
+    pl.SearchHyperParams(hyperparams.space),
     TestPerformance(show=True)
 ]
 
 
-# In[9]:
+# In[8]:
 
 
-reload(pipeline)
+reload(pl)
 pipe = pipeline.GridLine(grid)
 pipe.Execute(inputCsv)
 

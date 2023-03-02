@@ -41,7 +41,9 @@ class AugmentByQuality(pipeline.Adapter):
         return "AugmentByQuality: F=%d scale=%.2f" %(self.f, self.scl)
 
     def Process(self, pl):
-        shp = pl.Tr.shape        
+        shp = pl.Tr.shape
+
+        assert pl.xCols is not None
         df = pl.Tr[pl.xCols] # data subset to augment
         
         sclr = StandardScaler().fit(df)

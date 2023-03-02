@@ -1,0 +1,17 @@
+# First, ignore everything
+*
+# Now, whitelist the directories you need.
+# Make sure to add a trailing slash.
+!code/
+!code/*/
+
+# But ignore this directory.
+code/.ipynb_checkpoints/
+
+# And all the file types you need to track
+!*.py
+!*.ipynb
+!*.R
+
+# Not this file
+Untitled.ipynb

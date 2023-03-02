@@ -74,11 +74,14 @@ class AugmentByQuality(pipeline.Adapter):
         return pl
 
 
+
 class PlotFrequency(pipeline.Adapter):
     """ Plot count/frequency of data points by a column """
-    def __init__(self, col, saveAs=None):
+    def __init__(self, col, saveAs=None, once=False):
         self.saveAs = saveAs
         self.col = col
+        self.plotOnce = once
+        self._plotted = False
 
     def _plot(self, df):
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -94,8 +97,12 @@ class PlotFrequency(pipeline.Adapter):
             plt.show()
 
     def Process(self, pl):
-        self._plot(pl.Tr)
-        return pl
+        if self.once and self.plotted:
+            return pl
+        else:
+            self._plot(pl.Tr)
+            self._plotted = True
+            return pl
 
 
 class PlotPerturbation(pipeline.Adapter):

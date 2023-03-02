@@ -15,6 +15,7 @@ class Payload:
     def __init__(self, **kwargs):
         self.Tr = None
         self.Ts = None
+        self.Tv = None
         self.xCols = []
         self.yCol = None
         self.xsclr = None 
@@ -40,10 +41,11 @@ class Payload:
 
 class Adapter:
     """ The Adapter class to be overridden by each GridLine item. """
-    def _newline(self, pipelineId):
+    def _newline(self, pipelineId = 0, stepId = 0):
         # Called on each new pipeline
         self.output = ""
         self.lineId = pipelineId
+        self.stepId = stepId
         return self
 
     def __repr__(self):
@@ -69,11 +71,11 @@ class Adapter:
     def Process(self, X):
         raise NotImplementedError()
     
-    def Execute(self, X, i = 0, mute = False):
+    def Execute(self, X, i = 0, s = 0, mute = False):
         print(" --", self, end = " ... ")
         sys.stdout.flush()
 
-        self._newline(i)
+        self._newline(i, s)
 
         X = self.Process(X)
         rep = self._report()
@@ -105,7 +107,7 @@ class GridLine:
         self.grid = list(itertools.product(*self.grid))
 
     def _pipeline(self, i, pipe, X):
-        for adapter in pipe:
+        for s, adapter in enumerate(pipe):
             if adapter is None:
                 self.adapters['L%02d' %(i+1)].append("")
                 continue
@@ -116,7 +118,7 @@ class GridLine:
             self.adapters['L%02d' %(i+1)].append(utils.nice_name(adapter))
 
             try:
-                X = adapter.Execute(X, i+1, self.muted)
+                X = adapter.Execute(X, i+1, s+1, self.muted)
             except Exception as err:
                 traceback.print_exception(type(err), err, err.__traceback__)
                 print('L%02d FAILED: %s' %(i+1, err))
@@ -187,3 +189,4 @@ class GridLine:
 
     def Summarize(self):
         return pd.concat([self.Scores().T, self.Lines()]).T
+

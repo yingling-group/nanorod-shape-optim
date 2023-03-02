@@ -7,7 +7,7 @@
 # $ python x10_classifier_pipeline.py
 # ```
 
-# In[1]:
+# In[ ]:
 
 
 import numpy as np
@@ -30,34 +30,35 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.gaussian_process import kernels, GaussianProcessClassifier
 
 
-# ### Common libraries
+# ### Load libraries
 
-# In[2]:
+# In[ ]:
 
 
+# Custom scikit-learn like pipeline with additional functionalities
 import pipeline as pl
-from model import plotlib
 
 
-# In[3]:
+# In[ ]:
 
 
+# How the pipeline should be run for this project
 from model.AdData import *
 from model.AdFeatures import *
 from model.AdClassify import TestPerformance
+
+
+# In[ ]:
+
+
+# Utilities
 from model import hyperparams
-
-
-# In[4]:
-
-
-from importlib import reload
-reload(pl)
+from model import plotlib
 
 
 # ### Initialize
 
-# In[5]:
+# In[ ]:
 
 
 plotlib.load_fonts("../../../common/fonts/")
@@ -67,16 +68,23 @@ inputCsv = "../Data/imputed_data.mice.csv"
 ignoreXCols = ['imp', 'id', 'quality', 'lobe', 'full', 'other', 'coatingId']
 
 
-# In[6]:
+# In[ ]:
 
 
 loader = LoadData()
 loader.Execute(inputCsv)
 
 
+# In[ ]:
+
+
+plotQuality = pl.PlotFrequency('quality')
+plotClasses = pl.PlotFrequency('coatingId')
+
+
 # ### Define grid pipeline
 
-# In[7]:
+# In[ ]:
 
 
 grid = [
@@ -101,6 +109,9 @@ grid = [
         pl.AugmentImb(SMOTE()),
         pl.AugmentImb(ADASYN()),
     ),
+    # plotQuality,
+    # plotClasses,
+    pl.SplitValidation(),
     AggregateFeatures(show=False),
     pl.ScaleX(allColumns=False),
     (
@@ -112,26 +123,25 @@ grid = [
         pl.SelectFeaturesRFE(show=True)
     ),
     (
-        # SetModel(XGBClassifier()),
+        pl.SetModel(XGBClassifier()),
         pl.SetModel(KNeighborsClassifier()),
-        # SetModel(SVC()),
-        # SetModel(GaussianProcessClassifier()),
-        # SetModel(RandomForestClassifier()),
+        pl.SetModel(SVC()),
+        pl.SetModel(GaussianProcessClassifier()),
+        pl.SetModel(RandomForestClassifier()),
     ),
     pl.SearchHyperParams(hyperparams.space),
     TestPerformance(show=True)
 ]
 
 
-# In[8]:
+# In[ ]:
 
 
-reload(pl)
 pipe = pipeline.GridLine(grid)
 pipe.Execute(inputCsv)
 
 
-# In[10]:
+# In[ ]:
 
 
 res = pipe.Summarize()

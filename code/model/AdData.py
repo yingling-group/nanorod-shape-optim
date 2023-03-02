@@ -27,7 +27,9 @@ class LoadData(pipeline.Adapter):
             # Separate test and training data
             self.testdf = data[data.imp == 0].loc[lambda df: df.id.isin(testIds)]
             self.traindf = data.loc[lambda df: ~df.id.isin(testIds)].dropna()
-            if list(self.testdf.coating).count('lobe') == 2 and len(self.testdf.coating.unique()) == 3:
+
+            # keep only 1 lobe and all three classes
+            if list(self.testdf.coating).count('lobe') == 1 and len(self.testdf.coating.unique()) == 3:
                 break
 
         self.sayf("Test IDs: {}", list(testIds))

@@ -3,6 +3,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import matplotlib
+from pathlib import Path
+
+def load_fonts(path_to_dir):
+    """ Recursively load OTF and TTF font files from a directory
+        to matplotlib.
+    """
+    for path in Path(path_to_dir).rglob('*.otf'):
+        matplotlib.font_manager.fontManager.addfont(str(path))
+    for path in Path(path_to_dir).rglob('*.ttf'):
+        matplotlib.font_manager.fontManager.addfont(str(path))
+
+
 def class_boxplots(df, cols, by, name):
     """ Make boxplots of y classes for each X column.
         

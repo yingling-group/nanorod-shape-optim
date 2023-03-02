@@ -1,3 +1,9 @@
+import numpy as np
+import pandas as pd
+
+from model import pipeline
+from model import utils
+
 def Differences(idf):
     return (idf
            # peak shift
@@ -62,7 +68,23 @@ def InverseDifferences(idf):
            .assign(idw32 = lambda df: 1.0 / df.dw32)
            )
 
-    import numpy as np
     # reset infinite values
     df.replace([np.inf, -np.inf], 10000, inplace=True)
     return df
+
+
+class AggregateFeatures(pipeline.Adapter):
+    """ Calculate difference and inverse difference features. """
+    def __init__(self, show=True):
+        self.show = show
+    def Process(self, pl):
+        oldfeats = pl.Tr.columns
+        pl.Tr = Differences(pl.Tr)
+        pl.Tr = InverseDifferences(pl.Tr)
+        pl.Ts = Differences(pl.Ts)
+        pl.Ts = InverseDifferences(pl.Ts)
+        newfeats = pl.Tr.columns.difference(oldfeats)
+        if self.show:
+            self.sayf("Added {} new features.", len(newfeats))
+            self.sayf("{}", list(newfeats))
+        return pl

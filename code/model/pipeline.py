@@ -112,7 +112,7 @@ class GridLine:
                 self.adapters['L%02d' %(i+1)].append("")
                 continue
 
-            assert isinstance(adapter, Adapter), \
+            assert issubclass(type(adapter), Adapter), \
                 "Invalid adapter %s with type %s" %(str(adapter), type(adapter))
             
             self.adapters['L%02d' %(i+1)].append(utils.nice_name(adapter))
@@ -124,7 +124,7 @@ class GridLine:
                 print('L%02d FAILED: %s' %(i+1, err))
                 break
                 
-            assert isinstance(X, Payload), \
+            assert issubclass(type(X), Payload), \
                 "Invalid Process() return type. Payload expected."
 
         # final payload
@@ -151,7 +151,7 @@ class GridLine:
     def Execute(self, X):
         self.results = []
         for i in range(len(self.grid)):
-            X = self.ExecuteLine(i+1)
+            X = self.ExecuteLine(i+1, X)
             self.results.append(X)
 
     def Scores(self):

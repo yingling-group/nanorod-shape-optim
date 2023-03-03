@@ -75,6 +75,7 @@ class TestPerformance(pipeline.Adapter):
             assert pl.Tv is not None, "Validation set not defined"
             X = pl.Tv[pl.xCols]
             y = pl.Tv[pl.yCol]
+            self.sayf("Run on validation dataset.")
         else:
             X = pl.Ts[pl.xCols] # use the test set
             y = pl.Ts[pl.yCol]

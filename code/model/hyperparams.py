@@ -5,7 +5,7 @@ from sklearn.gaussian_process import kernels
 
 # list of tuples of: algorithm name, if to perform gridsearch, and the hyperparam space
 space = {
-    'multi:softprob': (False, dict(
+    'gbtree': (False, dict(
         gamma = np.linspace(0, 100, num=10),
         max_depth = [1, 2, 5, 6, 7, 8, 9],
         learning_rate = [0.001, 0.01, 0.05, 0.1, 0.5, 1, 2],
@@ -66,3 +66,6 @@ space = {
         n_jobs = [-1],
     ))
 }
+
+space['multi:softprob'] = space['gbtree']
+space['XGBClassifier'] = space['gbtree']

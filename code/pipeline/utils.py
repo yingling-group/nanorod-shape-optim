@@ -1,7 +1,13 @@
+import io
+import sys
+import time
+
 import numpy as np 
 import pandas as pd
 import warnings
+
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 
 class dfBuilder:
     """ Build a pandas dataframe one row at a time. """
@@ -106,6 +112,7 @@ def calc_vif(df):
     vif = vif.sort_values('VIF', ascending=False).T
     return vif.round(2)
 
+
 def nice_name(obj):
     """ Extract the class name of an object or instance """
     try:
@@ -115,3 +122,44 @@ def nice_name(obj):
         if "(" in cname:
             cname = cname.split("(")[0]
     return cname
+
+
+class _tee :
+    """ Redirect stdout and err to files.
+    """
+    def __init__(self, fout, std = None) :
+        self.fout = fout
+        self.std = std
+
+    def __del__(self) :
+        print(time.ctime()) # log end time
+        self.fout.close()
+
+    def write(self, text) :
+        self.fout.write(text)
+        if self.std is not None:
+            self.std.write(text)
+
+    def flush(self) :
+        self.fout.flush()
+        if self.std is not None:
+            self.std.flush()
+
+
+def set_stderr(ferr, fout = None, print_err = False):
+    """ Redirect stderr to a file.
+        Optionally also save stdout to a file.
+    """
+
+    if fout is not None:
+        fout = open(fout, 'w+')
+        sys.stdout = _tee(fout, sys.stdout)
+
+    ferr = open(ferr, 'w+')
+    if print_err:
+        sys.stderr = _tee(ferr, sys.stderr)
+    else:
+        sys.stderr = _tee(ferr)
+        
+    print(time.ctime()) # log start time
+

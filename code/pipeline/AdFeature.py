@@ -79,7 +79,7 @@ class SelectFeaturesRFE(pipeline.Adapter):
         self.best = None
 
     def Process(self, pl):
-        clf = RFECV(pl.model, cv=pl.cv, n_jobs = -1, scoring = pl.scoring,
+        clf = RFECV(pl.model, cv=pl.cv, n_jobs = -3, scoring = pl.scoring,
                    min_features_to_select=5)
 
         X = pl.Tr[pl.xCols]

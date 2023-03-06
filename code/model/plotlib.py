@@ -3,13 +3,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import matplotlib
-from pathlib import Path
-
 def load_fonts(path_to_dir):
-    """ Recursively load OTF and TTF font files from a directory
+    """ Recursively load all OTF and TTF font files from a directory
         to matplotlib.
     """
+    import matplotlib
+    from pathlib import Path
+    
     for path in Path(path_to_dir).rglob('*.otf'):
         matplotlib.font_manager.fontManager.addfont(str(path))
     for path in Path(path_to_dir).rglob('*.ttf'):
@@ -52,7 +52,7 @@ def class_boxplots(df, cols, by, name):
     plt.show()
 
 
-def corrplot(df, method, figsize = (7, 7), output = None):
+def corrplot(df, method, figsize = (7, 7), output = None, wcbar = True):
     """ Plot a correlation matrix using seaborn """
     corr = df.corr(method=method, numeric_only=True)
 
@@ -61,13 +61,31 @@ def corrplot(df, method, figsize = (7, 7), output = None):
 
     # Generate a custom diverging colormap
     cmap = sns.diverging_palette(250, 0, as_cmap=True)
+    
+    # Getting the Upper Triangle of the co-relation matrix
+    matrix = np.triu(corr)
+    
+    # Show the diagonal
+    np.fill_diagonal(matrix, False)
+    
+    # Annotation values to use
+    annot = corr.abs()
+    
+    if wcbar:
+        cbar_kws={"shrink": .5, "orientation": 'horizontal', 'pad': 0.05, 'aspect': 40}
+        ann_kws = {'fontsize': 'x-small'}
+    else:
+        cbar_kws={"shrink": .5, "orientation": 'vertical', 'pad': 0.05}
+        ann_kws = {'fontsize': 'x-small'}
 
     # Draw the heatmap with the mask and correct aspect ratio
-    sns.heatmap(corr, cmap=cmap, center=0, vmax=1, vmin=-1,
-                square=True, linewidths=.5, cbar_kws={"shrink": .5})
+    sns.heatmap(corr, cmap=cmap, center=0, vmax=1, vmin=-1, annot=annot,
+                fmt=".1f", mask=matrix, annot_kws = ann_kws,
+                square=True, linewidths=.5, cbar_kws = cbar_kws)
 
-    plt.title("%s correlation" %method.capitalize())
+    # plt.title("%s correlation" %method.capitalize())
     plt.tight_layout()
+    plt.minorticks_off()
 
     if output:
         plt.savefig(output, dpi=600)
@@ -91,7 +109,8 @@ def make_confusion_matrix(cf,
                           cmap='Blues',
                           title=None):
     '''
-    This function will make a pretty plot of an sklearn Confusion Matrix cm using a Seaborn heatmap visualization. From https://github.com/DTrimarchi10/confusion_matrix
+    This function will make a pretty plot of an sklearn Confusion Matrix cm using a Seaborn heatmap visualization.
+    Adapted from https://github.com/DTrimarchi10/confusion_matrix
 
     Arguments
     ---------

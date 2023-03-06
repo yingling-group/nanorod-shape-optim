@@ -10,11 +10,11 @@ from pipeline import utils
 
 class TestPerformance(pipeline.Adapter):
     """ Test the performance of a classifier. """
-    def __init__(self, savePref=None, show=True, use_validation_set = True):
+    def __init__(self, savePref=None, show=True, use_validation = False, use_test = True):
         self.savePref = savePref
         self.show = show
-        self.useValidationSet = use_validation_set
-        
+        self.useValidationSet = use_validation
+
     def _plot_confusion(self, y, p, pl):
         if not self.savePref:
             return
@@ -22,7 +22,7 @@ class TestPerformance(pipeline.Adapter):
         f1 = classification_report(y, p, output_dict = True, zero_division=0)
         stat = "\n\nWeighted f1-score: %0.3f" %f1['weighted avg']['f1-score']
         
-        name = utils.nice_name(pl.model)
+        name = pipeline.nice_name(pl.model)
 
         # Plot
         plotlib.make_confusion_matrix(cf, categories = pl.model.classes_,
@@ -49,7 +49,8 @@ class TestPerformance(pipeline.Adapter):
         ]
         
         # per class accuracy
-        for c in ['lobe', 'full', 'other']:
+        clsnames = pl.Tr[pl.yCol].unique()
+        for c in clsnames:
             r = "100%% accuracy on %s" %c
             v = False
             if c in f1:
@@ -66,8 +67,14 @@ class TestPerformance(pipeline.Adapter):
         pl.score_report = pd.DataFrame({ 'result': [i[1] for i in criteria] },
                                     index = [i[0] for i in criteria])
         pl.score = pl.score_report.sum().values[0]
-        pl.stats['wt_f1'] = f1['weighted avg']['f1-score']
-        pl.stats['acc_f1'] = f1['accuracy']
+        
+        if self.useValidationSet:            
+            pl.stats['val_wt_f1'] = f1['weighted avg']['f1-score']
+            pl.stats['val_acc'] = f1['accuracy']
+        else:
+            pl.stats['wt_f1'] = f1['weighted avg']['f1-score']
+            pl.stats['acc'] = f1['accuracy']
+
         return pl
 
     def Process(self, pl):
@@ -77,6 +84,7 @@ class TestPerformance(pipeline.Adapter):
             y = pl.Tv[pl.yCol]
             self.sayf("Run on validation dataset.")
         else:
+            assert pl.Ts is not None, "Test set not defined"
             X = pl.Ts[pl.xCols] # use the test set
             y = pl.Ts[pl.yCol]
 

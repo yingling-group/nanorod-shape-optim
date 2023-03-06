@@ -8,6 +8,10 @@ from . import utils
 class SetYCol(pipeline.Adapter):
     def __init__(self, ycol):
         self.ycol = ycol
+        
+    def __repr__(self):
+        return "SetYCol: " + self.ycol
+    
     def Process(self, pl):
         pl.yCol = self.ycol
         print("'%s'" %pl.yCol, end = " ")
@@ -16,6 +20,10 @@ class SetYCol(pipeline.Adapter):
 class DropCol(pipeline.Adapter):
     def __init__(self, col):
         self.col = col
+            
+    def __repr__(self):
+        return "DropCol: " + self.col
+
     def Process(self, pl):
         pl.Tr = pl.Tr.drop(self.col, axis=1)
         pl.Ts = pl.Ts.drop(self.col, axis=1)
@@ -80,3 +88,4 @@ class Stop(pipeline.Adapter):
     """ Stop execution of the pipeline (for debugging). """
     def Process(self, pl):
         raise BrokenPipeError("Stop requested")
+

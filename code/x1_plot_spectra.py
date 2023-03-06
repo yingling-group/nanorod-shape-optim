@@ -4,10 +4,8 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt 
 
-try:
-    plt.style.use("matplotlib.mplstyle")
-except:
-    pass
+plt.style.use("code/matplotlib.mplstyle")
+
 
 parser = argparse.ArgumentParser(
     description = 'Save spectra data from CSV file to a plot',
@@ -30,14 +28,14 @@ else:
 fig, ax = plt.subplots(figsize=(3.25, 2.2))
 
 df = csv[["wl1", "ab1"]].sort_values("wl1")
-ax.plot(df.wl1, df.ab1, 'k-', label = "GNR in H2O")
-
-df = csv[["wl3", "ab3"]].sort_values("wl3")
-ax.plot(df.wl3, df.ab3, 'g-', label = "After purification")
+ax.plot(df.wl1, df.ab1, 'k-', label = "GNR in water")
 
 if "wl2" in csv:
     df = csv[["wl2", "ab2"]].sort_values("wl2")
-    ax.plot(df.wl2, df.ab2, 'r-', label = "After overcoating")
+    ax.plot(df.wl2, df.ab2, 'r-', label = "After reaction")
+
+df = csv[["wl3", "ab3"]].sort_values("wl3")
+ax.plot(df.wl3, df.ab3, 'g-', label = "After purification")
 
 plt.xlim(400, 1000)
 plt.ylim(0, 2)
@@ -46,7 +44,7 @@ plt.xlabel("Wavelength (nm)")
 plt.ylabel("Absorbance (a.u.)")
 
 plt.legend()
-plt.grid()
+# plt.grid()
 
 plt.tight_layout()
 plt.savefig(out, dpi=600)

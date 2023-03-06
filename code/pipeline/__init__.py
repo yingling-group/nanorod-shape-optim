@@ -1,4 +1,4 @@
-from .utils import nice_name
+from .utils import nice_name, set_stderr
 from .pipeline import Payload, Adapter, GridLine
 
 from .AdAugment import AugmentByQuality, AugmentImb, PlotFrequency, PlotPerturbation

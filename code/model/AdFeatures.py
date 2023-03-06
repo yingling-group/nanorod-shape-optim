@@ -78,10 +78,17 @@ class AggregateFeatures(pipeline.Adapter):
         self.show = show
     def Process(self, pl):
         oldfeats = pl.Tr.columns
+        
         pl.Tr = Differences(pl.Tr)
         pl.Tr = InverseDifferences(pl.Tr)
+        
+        if pl.Tv is not None:
+            pl.Tv = Differences(pl.Tv)
+            pl.Tv = InverseDifferences(pl.Tv)
+            
         pl.Ts = Differences(pl.Ts)
         pl.Ts = InverseDifferences(pl.Ts)
+        
         newfeats = pl.Tr.columns.difference(oldfeats)
         if self.show:
             self.sayf("Added {} new features.", len(newfeats))

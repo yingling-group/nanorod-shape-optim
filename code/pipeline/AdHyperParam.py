@@ -25,11 +25,11 @@ class SearchHyperParams(pipeline.Adapter):
         if grid:
             print("running grid search", end = " ... ")
             clf = GridSearchCV(pl.model, hyp, cv=pl.cv, scoring=pl.scoring,
-                               n_jobs = -1)
+                               n_jobs = -3)
         else:
             print("running randomized search", end = " ... ")
             clf = RandomizedSearchCV(pl.model, hyp, cv=pl.cv, scoring=pl.scoring,
-                                     n_iter = 1000, n_jobs = -1)
+                                     n_iter = 1000, n_jobs = -3)
 
         X = pl.Tr[pl.xCols]
         y = pl.Tr[pl.yCol]

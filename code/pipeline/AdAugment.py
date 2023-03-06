@@ -8,7 +8,7 @@ from . import pipeline
 from . import utils
 
 class AugmentImb(pipeline.Adapter):
-    """ Augment the training dataset. """
+    """ Augment the training dataset using one of the `imblearn` methods. """
     def __init__(self, sampler_instance, show=True):
         self.overSampler = sampler_instance
         self.show = show
@@ -27,7 +27,7 @@ class AugmentImb(pipeline.Adapter):
 
 
 class AugmentByQuality(pipeline.Adapter):
-    """ Augment the training dataset.
+    """ Augment the training dataset by a quality factor.
         F : Frequency parameter, higher = more rows added
         scale : Perturbation parameter, lower = sample more similar to originals
     """
@@ -76,7 +76,7 @@ class AugmentByQuality(pipeline.Adapter):
 
 
 class PlotFrequency(pipeline.Adapter):
-    """ Plot count/frequency of data points by a column """
+    """ Plot count/frequency of available data by a column. """
     def __init__(self, col, saveAs=None, once=False):
         self.saveAs = saveAs
         self.col = col
@@ -106,7 +106,7 @@ class PlotFrequency(pipeline.Adapter):
 
 
 class PlotPerturbation(pipeline.Adapter):
-    """ Make scatterplots of two dataframes to compare. """
+    """ Make scatterplots of two dataframes to compare augmentation. """
     def __init__(self, orig, count = 5, saveAs=None, scaled=False):
         self.saveAs = saveAs
         self.orig = orig

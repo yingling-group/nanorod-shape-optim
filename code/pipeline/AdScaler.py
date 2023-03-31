@@ -14,7 +14,7 @@ class ScaleX(pipeline.Adapter):
         self.allCols = allColumns
         
     def __repr__(self):
-        return "ScaleX: " + utils.nice_name(self.scaler)
+        return "ScaleX: " + utils.nice_name(self.scaler) + " All: " + str(self.allCols)
 
     def Process(self, pl):
         if self.allCols:

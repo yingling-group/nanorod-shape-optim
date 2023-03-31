@@ -63,11 +63,14 @@ def plot_spectra(csvfile):
     print("Save OK: %s" %out)
 
 
-def extract_peak_fwhm(df):
+def extract_peak_fwhm(name, df):
     df.columns = ["wl", "ab"]
     df = df.sort_values("wl").dropna()
+
+    # read wavelength and absorbance
+    # Scale absorbance by 10 to find the peaks easily
     x = df["wl"]
-    y = df["ab"]
+    y = 10 * df["ab"]
 
     # BSpline Fit
     bspl = make_interp_spline(x, y, k=3)
@@ -95,6 +98,7 @@ def extract_peak_fwhm(df):
             plt.xticks(range(400, 900, 100))
             plt.xlim(400, 900)
             plt.grid()
+            plt.savefig("Plots/x2_spectral_feats_%s.png" %name)
             plt.show()
     except IndexError:
         print("failed to find the peaks", end=" ... ")
@@ -108,6 +112,7 @@ def extract_peak_fwhm(df):
             plt.xticks(range(400, 900, 100))
             plt.xlim(400, 900)
             plt.grid()
+            plt.savefig("Plots/x2_spectral_feats_%s.png" %name)
             plt.show()
         return "", "", "", ""
 
@@ -186,14 +191,14 @@ for fname in csv.name:
         spec.columns = ["wl1", "ab1","wl3", "ab3"]
 
     # In water
-    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[["wl1", "ab1"]])
+    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(fname, spec[["wl1", "ab1"]])
     df['tspk1'].append(tspk)
     df['lspk1'].append(lspk)
     df['tsfw1'].append(tsfw)
     df['lsfw1'].append(lsfw)
 
     # After purification
-    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[["wl3", "ab3"]])
+    tspk, lspk, tsfw, lsfw = extract_peak_fwhm(fname, spec[["wl3", "ab3"]])
     df['tspk3'].append(tspk)
     df['lspk3'].append(lspk)
     df['tsfw3'].append(tsfw)
@@ -201,7 +206,7 @@ for fname in csv.name:
 
     # After overcoating
     if "wl2" in spec:
-        tspk, lspk, tsfw, lsfw = extract_peak_fwhm(spec[["wl2", "ab2"]])
+        tspk, lspk, tsfw, lsfw = extract_peak_fwhm(fname, spec[["wl2", "ab2"]])
         df['tspk2'].append(tspk)
         df['lspk2'].append(lspk)
         df['tsfw2'].append(tsfw)

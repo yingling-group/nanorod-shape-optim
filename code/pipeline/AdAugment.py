@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler
 
@@ -84,17 +85,46 @@ class PlotFrequency(pipeline.Adapter):
         self._plotted = False
 
     def _plot(self, df):
-        fig, ax = plt.subplots(figsize=(4, 3))
+        fig, ax = plt.subplots(figsize=(3.25, 2.2))
         df[self.col].hist(bins=20, ax = ax, label = "N = %d" %df.shape[0])
         # ax.set_xticks(np.arange(df[self.qcol].min(),
         #                         df[self.qcol].max()+1))
         ax.set(xlabel = self.col, ylabel = "Count")
+        ax.grid(False)
         ax.legend()
         if self.saveAs:
             plt.savefig(self.saveAs)
-            plt.close()
+        plt.show()
+
+    def Process(self, pl):
+        if self.plotOnce and self.plotted:
+            return pl
         else:
-            plt.show()
+            self._plot(pl.Tr)
+            self._plotted = True
+            return pl
+
+class PlotCount(pipeline.Adapter):
+    """ Plot count of available data by a column. """
+    def __init__(self, col, xtickLabels = [], saveAs=None, once=False):
+        self.saveAs = saveAs
+        self.col = col
+        self.xtickLabels = xtickLabels
+        self.plotOnce = once
+        self._plotted = False
+
+    def _plot(self, df):
+        fig, ax = plt.subplots(figsize=(3.25, 2.2))
+        sns.countplot(x=df[self.col], ax = ax)
+        plt.minorticks_off()
+        ax.set(ylabel = "Count", xlabel = "")
+        
+        if len(self.xtickLabels) > 0:
+            ax.set(xticklabels = self.xtickLabels)
+
+        if self.saveAs:
+            plt.savefig(self.saveAs)
+        plt.show()
 
     def Process(self, pl):
         if self.plotOnce and self.plotted:
@@ -107,11 +137,12 @@ class PlotFrequency(pipeline.Adapter):
 
 class PlotPerturbation(pipeline.Adapter):
     """ Make scatterplots of two dataframes to compare augmentation. """
-    def __init__(self, orig, count = 5, saveAs=None, scaled=False):
+    def __init__(self, orig, xCol = None, yCols = [], saveAs=None, scaled=False):
         self.saveAs = saveAs
         self.orig = orig
         self.scld = scaled
-        self.count = count
+        self.xCol = xCol
+        self.yCols = yCols
 
     def _plot(self, df):
         df1 = self.orig.select_dtypes(np.number)
@@ -125,24 +156,32 @@ class PlotPerturbation(pipeline.Adapter):
             df2 = pd.DataFrame(sclr.transform(df2[xcols]), columns=xcols)
 
         n = 0
-        fig = plt.figure(figsize=(7, 6))
+        count = len(xcols)
+        fig, axes = plt.subplots(2, 2, figsize=(3.5, 3), sharex=True)
+        axes2 = axes.flatten()
 
-        for i in range(self.count):
-            col1 = xcols[i]
-            for j in range(i+1, self.count):
-                n += 1
-                col2 = xcols[j]
-                ax = fig.add_subplot(4, 5, n)
-                ax.plot(df2[col1], df2[col2], 'r.', alpha=0.7, label="new")
-                ax.plot(df1[col1], df1[col2], 'kx', label="orig")
-                ax.set(xlabel = col1, ylabel=col2)
+        col1 = self.xCol
+
+        for col2 in self.yCols:
+            ax = axes2[n]
+            ax.plot(df2[col1], df2[col2], 'r.', alpha=0.7, label="new")
+            ax.plot(df1[col1], df1[col2], 'kx', label="orig")
+            ax.set(ylabel=col2)
+
+            n += 1
+            if n > 20:
+                break
+
+        for i in range(2):
+            axes[-1, i].set(xlabel=col1)
 
         plt.tight_layout()
+        plt.subplots_adjust(hspace=0.1, wspace=0.45)
+
         if self.saveAs:
             plt.savefig(self.saveAs)
-            plt.close()
-        else:
-            plt.show()
+        
+        plt.show()
 
     def Process(self, pl):
         self._plot(pl.Tr)

@@ -198,8 +198,15 @@ class GridLine:
             "xcols": [" ".join(res.xCols) for res in self.results],
         }
         
-        # Add columns for the stats
-        for st in self.results[0].stats:
+        # find the stats column names
+        stcols = []
+        for res in self.results:
+            for key in res.stats:
+                if key not in stcols:
+                    stcols.append(key)
+
+        # add the stats
+        for st in stcols:
             dc[st] = []
             for res in self.results:
                 if st in res.stats:

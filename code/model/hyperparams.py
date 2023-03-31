@@ -6,12 +6,13 @@ from sklearn.gaussian_process import kernels
 # list of tuples of: algorithm name, if to perform gridsearch, and the hyperparam space
 space = {
     'gbtree': (False, dict(
+        booster = ['gbtree', 'dart'],
         gamma = np.linspace(0, 100, num=10),
         max_depth = [1, 2, 5, 6, 7, 8, 9],
         learning_rate = [0.001, 0.01, 0.05, 0.1, 0.5, 1, 2],
         n_estimators = range(1, 10),
         subsample = np.linspace(0.1, 0.9, num=5),
-        objective = ['multi:softmax', 'multi:softprob'],
+        objective = ['multi:softproba'], #['multi:softmax', 'multi:softproba'],
         reg_alpha = [0,0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2,102.4,200],
         reg_lambda = [0,0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2,102.4,200],
     )),

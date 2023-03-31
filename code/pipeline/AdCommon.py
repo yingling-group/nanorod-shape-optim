@@ -65,6 +65,26 @@ class SetModel(pipeline.Adapter):
         return pl
 
 
+class SetAlgorithm(pipeline.Adapter):
+    """ Create a new model and fit to the training dataset. """
+    def __init__(self, alg_name, **kwargs):
+        self.alg = alg_name
+        self.args = kwargs
+
+    def __repr__(self):
+        return "SetAlgorithm: " + utils.nice_name(self.alg)
+
+    def Process(self, pl):
+        # Create a new model and fit it
+        model = self.alg(**self.args)
+        # fit the model to data
+        X = pl.Tr[pl.xCols]
+        y = pl.Tr[pl.yCol]
+        model.fit(X, y)
+        pl.model = model
+        return pl
+
+
 class SplitValidation(pipeline.Adapter):
     """ Split the training dataset into training and validation. """
     def __init__(self, split_fraction = 0.2):

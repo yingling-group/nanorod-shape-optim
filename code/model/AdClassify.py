@@ -51,6 +51,7 @@ class TestPerformance(pipeline.Adapter):
         # per class accuracy
         clsnames = pl.Tr[pl.yCol].unique()
         for c in clsnames:
+            c = str(c)
             r = "100%% accuracy on %s" %c
             v = False
             if c in f1:
@@ -67,6 +68,7 @@ class TestPerformance(pipeline.Adapter):
         pl.score_report = pd.DataFrame({ 'result': [i[1] for i in criteria] },
                                     index = [i[0] for i in criteria])
         pl.score = pl.score_report.sum().values[0]
+        pl.score = f1['2']['f1-score']
         
         if self.useValidationSet:            
             pl.stats['val_wt_f1'] = f1['weighted avg']['f1-score']
@@ -95,8 +97,5 @@ class TestPerformance(pipeline.Adapter):
             print()
             print(pl.score_report)
             self.sayf("{}", classification_report(y, p, zero_division=0))
-            # # Numeric ycol needed for AUC
-            # if pl.yCol in pl.Ts.select_dtypes(include=['int64','float64']):
-            #     self.sayf("AUC = {}", roc_auc_score(y, p, multi_class='ovo'))
         self._plot_confusion(y, p, pl)
         return pl

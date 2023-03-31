@@ -12,41 +12,42 @@ import xgboost as xgb
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process import kernels
 
-plt.style.use("../../matplotlib.mplstyle")
-mice = pd.read_csv("../../01_Imputation_MICE/imputed_data.mice.csv")
+plt.style.use("../matplotlib.mplstyle")
+mice = pd.read_csv("../../Data/imputed_data.mice.csv")
 
 # Features to augment
 xcols = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', 'lspk2', 'tspk2',
          'lsfw2', 'tsfw2', 'lspk3', 'tspk3', 'lsfw3', 'tsfw3']
-ycols = ['square', 'full', 'lobe', 'half', 'agg', 'line']
+ycols = ['full', 'other', 'lobe']
 
 # Gold
 x1 = ['lspk1', 'tspk1', 'lsfw1', 'tsfw1', # peaks, fwhm
       'dp11', 'dw11', # shift, broadening
-      # 'idp11', 'idw11' # inverse changes
      ]
 
 # Coating
 x2 = ['teos', 'lspk2','tspk2', 'lsfw2', 'tsfw2', # peaks, fwhm
       'lp21', 'tp21', 'lw21', 'tw21', 'dp22', 'dp21', 'dw22', 'dw21', # shift, broadening
-      # 'idp22', 'idw22', 'idp21', 'idw21', 'ilp21', 'ilw21', 'itp21', 'itw21' # inverse changes
      ]
 
 # Purification
 x3 = ['lspk3', 'tspk3','lsfw3', 'tsfw3', # peaks, fwhm
       'lp31', 'lp32', 'tp31', 'tp32', 'lw31', 'lw32', 'tw31', 'tw32', 'dp33', 'dp31', 'dp32', 'dw33', 'dw31', 'dw32', # shift, broadening
-      # 'idp33', 'idw33', 'idp31', 'idw31', 'ilp31', 'ilw31', 'itp31', 'itw31', 'idp32', 'idw32', 'ilp32', 'ilw32', 'itp32', 'itw32' # inverse changes
      ]
 
 bestfeats3 = ['tspk1', 'tsfw3', 'lsfw2', 'lspk1', 'tspk2', 'lspk2', 'dw11', 'tp31', 'dp32']
 bestfeats2 = ['tspk1', 'lspk1', 'lsfw2', 'tw21', 'dw11', 'tspk2', 'tsfw2', 'lspk2', 'tsfw1']
 
-xgparams = {
-    'max_depth': 2,
-    'n_estimators': 1000,
-    'eta': 0.02,
-    'objective': 'reg:squarederror'
-}
+xgparams = dict(base_score=0.5, booster='gbtree', callbacks=None,
+    colsample_bylevel=1, colsample_bynode=1, colsample_bytree=1,
+    early_stopping_rounds=None, enable_categorical=False,
+    eval_metric=None, gamma=0.0, gpu_id=-1, grow_policy='depthwise',
+    importance_type=None, interaction_constraints='',
+    learning_rate=0.1, max_bin=256, max_cat_to_onehot=4,
+    max_delta_step=0, max_depth=5, max_leaves=0, min_child_weight=1,
+    monotone_constraints='()', n_estimators=8, n_jobs=0,
+    num_parallel_tree=1, objective='reg:squarederror', predictor='auto',
+    random_state=0, reg_alpha=0.4)
 
 def BuildXGBModel(y, alg, df):
     ml = regressor.Regressor(df)
@@ -71,14 +72,14 @@ allres = {
 }
 
 for imp in range(1, 6):
-    df = mice[mice['.imp'] == imp]
+    df = mice[mice['imp'] == imp]
     for opt in ("full", "lobe"):
         
         # XGB Regression Models
         # =============================================================
         xgmdl1 = BuildXGBModel("lobe", xgb.XGBRegressor(**xgparams), df)
         xgmdl2 = BuildXGBModel("full", xgb.XGBRegressor(**xgparams), df)
-        xgmdl3 = BuildXGBModel("half", xgb.XGBRegressor(**xgparams), df)
+        xgmdl3 = BuildXGBModel("other", xgb.XGBRegressor(**xgparams), df)
 
         x0 = xgmdl1.ScaleX(xgmdl1.Prep(df)).mean()
         res = response.GAOptimize(x0, 
@@ -100,7 +101,7 @@ for imp in range(1, 6):
         # =============================================================
         gpmdl1 = BuildGPRModel("lobe", GaussianProcessRegressor(kernel=kern), df)
         gpmdl2 = BuildGPRModel("full", GaussianProcessRegressor(kernel=kern), df)
-        gpmdl3 = BuildGPRModel("half", GaussianProcessRegressor(kernel=kern), df)
+        gpmdl3 = BuildGPRModel("other", GaussianProcessRegressor(kernel=kern), df)
 
         x0 = gpmdl1.ScaleX(gpmdl1.Prep(df)).mean()
         res = response.GAOptimize(x0, 

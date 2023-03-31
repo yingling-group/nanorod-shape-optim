@@ -127,8 +127,8 @@ def calc_other_fraction(df):
     other = df.rodssquare + df.rodshalf + df.rodsagg + df.rodsline
     return other / tot
 
-def calc_quality(df):
-    return df[["rodssquare","rodsfull","rodslobe","rodshalf","rodsagg","rodsline"]].std(axis=1)
+# def calc_quality(df):
+#     return df[["rodssquare","rodsfull","rodslobe","rodshalf","rodsagg","rodsline"]].std(axis=1)
 
 def add_column(dfdict, csv, col):
     if col in csv:

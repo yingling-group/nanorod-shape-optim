@@ -12,6 +12,9 @@ try:
 except:
     pass
 
+# Read Melanie and Rowe CSV files one by one from 'Data/Spectra/'
+# Manually combine them to 'Data/all_spectra.csv'
+
 parser = argparse.ArgumentParser(
     description = 'Extract spectral features into a CSV file',
     epilog = 'Author: Akhlak Mahmood, Yingling Group, NCSU')
